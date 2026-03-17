@@ -1,0 +1,37 @@
+{
+  "name": "@aioschema/js",
+  "version": "0.5.5",
+  "description": "AIOSchema v0.5.5 — Node.js reference implementation library.",
+  "main": "aioschema_v055.js",
+  "files": [
+    "aioschema_v055.js",
+    "README.md",
+    "LICENSE.md"
+  ],
+  "keywords": [
+    "aioschema",
+    "provenance",
+    "content-integrity",
+    "manifest",
+    "cryptographic-hash",
+    "ed25519",
+    "bitcoin",
+    "opentimestamps",
+    "ai-content",
+    "chain-of-custody"
+  ],
+  "author": "Ovidiu Ancuta <ovidiu@aioschema.org>",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "homepage": "https://aioschema.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aioschema/aioschema.git",
+    "directory": "implementations/js"
+  },
+  "bugs": {
+    "url": "https://github.com/aioschema/aioschema/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

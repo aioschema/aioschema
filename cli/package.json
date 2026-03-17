@@ -1,0 +1,39 @@
+{
+  "name": "@aioschema/cli",
+  "version": "0.5.5",
+  "description": "AIOSchema v0.5.5 — command-line tool for generating and verifying provenance manifests.",
+  "main": "cli.js",
+  "bin": {
+    "aioschema": "./cli.js"
+  },
+  "files": [
+    "cli.js",
+    "README.md",
+    "LICENSE.md"
+  ],
+  "dependencies": {
+    "@aioschema/js": "0.5.5"
+  },
+  "keywords": [
+    "aioschema",
+    "provenance",
+    "cli",
+    "content-integrity",
+    "manifest",
+    "cryptographic-hash"
+  ],
+  "author": "Ovidiu Ancuta <ovidiu@aioschema.org>",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "homepage": "https://aioschema.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aioschema/aioschema.git",
+    "directory": "cli"
+  },
+  "bugs": {
+    "url": "https://github.com/aioschema/aioschema/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,20 @@
+[package]
+name        = "aioschema"
+version     = "0.5.5"
+edition     = "2021"
+description = "AIOSchema v0.5.5 — content provenance standard reference implementation"
+license     = "proprietary"
+
+[dependencies]
+sha2          = "0.10"
+sha3          = "0.10"
+ed25519-dalek = { version = "2", features = [] }
+hex           = "0.4"
+serde         = { version = "1", features = ["derive"] }
+serde_json    = "1"
+regex         = "1"
+once_cell     = "1"
+thiserror     = "1"
+
+[dev-dependencies]
+# no additional dev deps — test vectors loaded from filesystem
