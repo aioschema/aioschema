@@ -1,3 +1,3 @@
-module github.com/aioschema/aioschema-go
+module github.com/aioschemahub/aioschema
 
 go 1.21

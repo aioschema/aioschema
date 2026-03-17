@@ -11,10 +11,10 @@ import * as fs   from "fs";
 import * as path from "path";
 import * as C    from "crypto";
 
-import { computeHash, parseHash, safeEqual, canonicalJson } from "../algorithms";
-import { generateManifest, manifestFromJson, canonicalManifestBytes } from "../manifest";
-import { verifyManifest } from "../verify";
-import { CORE_HASH_FIELDS, Manifest } from "../types";
+import { computeHash, parseHash, safeEqual, canonicalJson } from "./algorithms";
+import { generateManifest, manifestFromJson, canonicalManifestBytes } from "./manifest";
+import { verifyManifest } from "./verify";
+import { CORE_HASH_FIELDS, Manifest } from "./types";
 
 // ── Test harness ──────────────────────────────────────────────────────────────
 
@@ -35,7 +35,8 @@ function check(id: string, name: string, cond: boolean, detail = ""): void {
 
 // ── Load vectors ──────────────────────────────────────────────────────────────
 
-const vectorsPath = "/home/claude/vectors.json";
+const vectorsPath = process.env.AIOSCHEMA_VECTORS
+  || path.join(__dirname, '../../conformance/cross_verify_vectors.json');
 const vectors = JSON.parse(fs.readFileSync(vectorsPath, "utf8"));
 
 console.log(`\n=== AIOSchema v0.5.5 Cross-Verification: TypeScript side ===`);

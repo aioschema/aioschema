@@ -6,7 +6,7 @@ use crate::algorithms::{
     SIGNATURE_PATTERN, TIMESTAMP_PATTERN, UUID_PATTERN,
 };
 use crate::types::{
-    AiosError, AnchorRecord, MatchType, VerificationResult, VerifyOptions, Manifest,
+    AiosError, MatchType, VerificationResult, VerifyOptions, Manifest,
     SOFT_BINDING_THRESHOLD_DEFAULT, SOFT_BINDING_THRESHOLD_MAX, SUPPORTED_VERSIONS,
 };
 use ed25519_dalek::{Signature, VerifyingKey};

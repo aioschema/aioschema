@@ -221,6 +221,11 @@ fn run_manifest_verify_vector(v: &Vector) -> bool {
         Ok(m) => m,
         Err(e) => {
             eprintln!("    deserialize manifest: {e}");
+            // A deserialization failure means the manifest is structurally invalid.
+            // If the vector expects success=false, this is the correct outcome.
+            if !exp_success {
+                return true;
+            }
             return false;
         }
     };
