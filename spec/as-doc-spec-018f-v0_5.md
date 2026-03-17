@@ -1,5 +1,3 @@
----
-
 # **AIOSchema Specification v0.5.5**  
 ## **Public Review Draft — Merged Authoritative Edition**
 
