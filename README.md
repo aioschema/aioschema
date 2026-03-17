@@ -19,7 +19,7 @@ AIOSchema is an open standard for generating, anchoring, and verifying digital c
     "asset_id": "019526c1-3b2a-7f4d-9e01-a1b2c3d4e5f6",
     "schema_version": "0.5.5",
     "creation_timestamp": "2026-03-01T00:00:00Z",
-    "hash_original": "sha256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "hash_original": "sha256-e3b0c44298fc1c149afbf4c8996fb98467ae41e4649b934ca495991b7852b855",
     "core_fingerprint": "sha256-...",
     "creator_id": "ed25519-fp-ebc64203390ddefc442ade9038e1ae18"
   }
@@ -42,9 +42,6 @@ aioschema/
 │   ├── go/                      Reference implementation (Go 1.21+)
 │   └── rust/                    Reference implementation (Rust 2021)
 ├── conformance/                 Cross-implementation test vectors (JSON)
-└── tools/
-    ├── wordpress/               WordPress manifest block + meta tag snippets
-    └── jekyll/                  Jekyll plugin gem
 ```
 
 ---
