@@ -4,10 +4,10 @@ All notable changes to the AIOSchema specification and reference implementations
 
 ---
 
-## v0.5.5 — February 2026
+## v0.5.5 — March 17, 2026
 
-**The stable foundation release.** First version with four independent reference
-implementations and a cross-verified conformance test suite.
+**The stable foundation release.** First and only published version. Five independent
+reference implementations with a fully cross-verified conformance test suite.
 
 ### Specification
 
@@ -24,51 +24,53 @@ implementations and a cross-verified conformance test suite.
 
 ### Reference implementations
 
-- **Python** (`aioschema_v055.py`) — 108 tests, all passing
-- **TypeScript** (`implementations/typescript/`) — 70 tests, all passing
-- **Go** (`implementations/go/`) — all unit tests and 14 CV vectors passing
-- **Rust** (`implementations/rust/`) — all unit tests and 14 CV vectors passing
+- **Python** (`implementations/python/`) — 108 tests, all passing, 14/14 CV vectors
+- **TypeScript** (`implementations/typescript/`) — 70 tests, all passing, 14/14 CV vectors
+- **Node.js** (`implementations/js/`) — 80 tests, all passing, 14/14 CV vectors
+- **Go** (`implementations/go/`) — 27 tests, all passing, 14/14 CV vectors
+- **Rust** (`implementations/rust/`) — 30 tests, all passing, 14/14 CV vectors
 
 ### Conformance
 
-- TV-01 through TV-18 formally defined and implemented across all suites
-- CV-01 through CV-14 deterministic cross-implementation vectors in `cross_verify_vectors.json`
-- Bootstrap rule verified in all four implementations: `core_fingerprint` absent from `CORE_HASH_FIELDS`
+- TV-01 through TV-19 formally defined and implemented across all suites
+- CV-01 through CV-14 deterministic cross-implementation vectors in `conformance/cross_verify_vectors.json`
+- Bootstrap rule verified in all five implementations: `core_fingerprint` absent from `CORE_HASH_FIELDS`
 
 ---
 
-## v0.5.1 — February 2026
+## v0.5.1 — February 2026 *(Founding provenance record — not published)*
 
+- Added `previous_version_anchor` field for version chain support
 - Soft binding threshold capped at `SOFT_BINDING_THRESHOLD_MAX`
 - Minor field validation improvements
 
-## v0.5 — February 2026
+## v0.5 — February 2026 *(Founding provenance record — not published)*
 
 - Added `manifest_signature` concept (preliminary)
 - Added `anchor_reference` field
 - Multi-hash `hash_original` array support (preliminary)
 
-## v0.4 — February 2026
+## v0.4 — February 2026 *(Founding provenance record — not published)*
 
 - Added Ed25519 `signature` field
 - Added `creator_id` with `ed25519-fp-` format
 - UUID v7 `asset_id` required for new manifests
 
-## v0.3.1 — February 2026
+## v0.3.1 — February 2026 *(Founding provenance record — not published)*
 
 - Patch: timestamp validation requires UTC `Z` suffix
 
-## v0.3 — February 2026
+## v0.3 — February 2026 *(Founding provenance record — not published)*
 
 - Added `extensions` block
 - Added soft binding via `extensions.soft_binding` pHash
 
-## v0.2 — February 2026
+## v0.2 — February 2026 *(Founding provenance record — not published)*
 
 - Added `hash_schema_block` (now `core_fingerprint`)
 - SHA-384 and SHA3-256 algorithm support
 
-## v0.1 — February 2026
+## v0.1 — February 2026 *(Founding provenance record — not published)*
 
 - Initial release
 - `asset_id`, `hash_original`, `creation_timestamp`, `creator_id`
@@ -78,6 +80,12 @@ implementations and a cross-verified conformance test suite.
 
 ## Supported versions
 
-The following schema versions are accepted by v0.5.5 verifiers:
+v0.5.5 is the first and only published version of AIOSchema. Versions v0.1 through
+v0.5.1 are founding provenance records — cryptographically anchored prior art establishing
+the development lineage, but never publicly released.
+
+v0.5.5 verifiers accept the following `schema_version` values to preserve the integrity
+of the founding provenance chain. These values appear in the anchored founding record
+manifests and must remain verifiable:
 
 `0.1` `0.2` `0.3` `0.3.1` `0.4` `0.5` `0.5.1` `0.5.5`
