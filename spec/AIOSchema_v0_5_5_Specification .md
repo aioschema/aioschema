@@ -4,7 +4,7 @@
 **Document ID:** as-doc-spec-018f-v0.5.5
 **Status:** Technical Review
 **Authored:** February 2026
-**Published:** TBD
+**Published:** March 2026
 **Author:** Ovidiu Ancuta
 **Authority:** https://aioschema.org
 **License:** CC-BY 4.0
