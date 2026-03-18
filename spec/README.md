@@ -1,35 +1,61 @@
-# AIOSchema Specification — Which File to Use
+# AIOSchema Specification
 
-This folder contains two editions of the v0.5.5 specification. They are not duplicates.
+AIOSchema is an open standard for cryptographic content provenance and digital authenticity — for both digital and physical assets. It defines a minimal, verifiable manifest format that establishes what an asset is, who created it, and when it existed, independently of any platform, storage system, or proprietary tool.
 
----
-
-## `AIOSchema_v0_5_5_Specification.md` — **Implementer Edition**
-
-Use this to build a conforming implementation.
-
-- Concise (~872 lines)
-- Covers all normative requirements: core block fields, verification procedure, algorithm registry, extension block, anchor formats
-- "Technical Preview" status header
-- Dual-licensed: CC-BY 4.0 (spec text) / Apache 2.0 (implementations)
-- This is the document third-party implementors should read
+**Version:** 0.5.5 — Technical Review
+**Author:** Ovidiu Ancuta
+**Authority:** https://aioschema.org
+**License:** CC-BY 4.0
 
 ---
 
-## `as-doc-spec-018f-v0_5.md` — **Founding Provenance Edition**
+## Document
 
-This is the merged authoritative/review draft, including the founding anchor record.
+**`AIOSchema_v0_5_5_Specification.md`** is the normative specification. It covers:
 
-- Full edition including §18 (Founding Provenance Procedure) and the self-anchoring record for this document
-- Used to establish prior art for the specification itself via Bitcoin anchoring
-- Contains the `asset_id`: `as-doc-spec-018f-v0.5.5`
-- "Public Review Draft — Merged Authoritative Edition" status header
-- The anchor timestamp in §18 is independent of the publication decision — it records when this version was created and locked, not when it was published
+- Core Block structure and field definitions
+- Hash algorithm registry and validation rules
+- Verification procedure (10-step normative process)
+- Anchoring mechanism and anchor resolver contract
+- Extension block and soft binding
+- Interoperability mappings — C2PA, EXIF/XMP, schema.org, W3C PROV
+- Security, privacy, and abuse resistance properties
+- Governance model
+- Mechanism registries
 
-**For implementation purposes, use the Implementer Edition above.**
+Designed to be read in under an hour and implemented in a day.
 
 ---
 
-## Relationship
+## Implementations
 
-Both documents describe the same v0.5.5 standard. The Founding Provenance Edition is the canonical legal/anchored record; the Implementer Edition is the trimmed, reader-friendly version derived from it. If there is any discrepancy between the two, the Founding Provenance Edition prevails.
+Five reference implementations are available in `../implementations/`, all cross-verified against a common deterministic test suite:
+
+| Language | Folder | Tests |
+|---|---|---|
+| Python | `implementations/python/` | 108 |
+| TypeScript | `implementations/typescript/` | 70 |
+| Node.js | `implementations/nodejs/` | 80 |
+| Go | `implementations/go/` | 27 |
+| Rust | `implementations/rust/` | 30 |
+
+---
+
+## Conformance
+
+Test vectors are in `../conformance/`. Any conforming implementation must pass all 18 test vectors (TV-01 through TV-18) and all 14 cross-implementation deterministic vectors (CV-01 through CV-14).
+
+---
+
+## Status
+
+This is a Technical Review release. The specification is complete and implemented. Feedback and implementation reports are welcome at https://aioschema.org/contribute.
+
+The founding provenance record for this specification is published at https://aioschema.org/provenance/.
+
+---
+
+## License
+
+- **Specification:** CC-BY 4.0 — https://creativecommons.org/licenses/by/4.0/
+- **Reference Implementations:** Apache License 2.0 — https://www.apache.org/licenses/LICENSE-2.0

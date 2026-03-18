@@ -103,7 +103,7 @@ interpreted as described in RFC 2119.
 | **Privacy by Design** | No personal data in the Core Block. Identifiers are non-identifying (UUID v4/v7 or public-key fingerprint). |
 | **Technology-Neutral** | No mandatory blockchain, storage system, watermarking, or metadata container. |
 | **Durability** | Designed to survive recompression, resizing, format conversion, and platform uploads. See §8. |
-| **Open Governance** | Will transition to a public foundation. See §14. |
+| **Open Governance** | Will transition to a public foundation. See §13. |
 | **Lightweight** | A developer should be able to read the spec in under an hour and implement it in a day. Every Core Block addition must justify its complexity cost. |
 
 ---
@@ -672,6 +672,12 @@ During the founder-controlled phase, the founder maintains all registries. New e
 
 Upon establishment of the AIOSchema Foundation, registry maintenance transfers to the Foundation. The Royalty-Free IPR commitment applies to all registered mechanisms.
 
+## Security Considerations
+
+The security, privacy, and abuse resistance properties of AIOSchema are addressed architecturally in §12. The Core Block fields are frozen and tamper-evident by design — any modification is detectable through `core_fingerprint` verification. Anonymous mode provides zero-disclosure provenance by default. Implementers MUST follow the requirements in §12.4.
+
+---
+
 ## Appendix A — JSON Schema (Normative)
 
 Published at `https://aioschema.org/schemas/v0.5.5/manifest.json`.
@@ -739,7 +745,7 @@ Published at `https://aioschema.org/schemas/v0.5.5/manifest.json`.
         "previous_version_anchor": {
           "type": ["string", "null"],
           "pattern": "^aios-anchor:[a-z0-9_-]+:[a-zA-Z0-9_-]+$",
-          "description": "Anchor URI of the immediately preceding version. Creates a cryptographic version chain. See §18."
+          "description": "Anchor URI of the immediately preceding version. Creates a cryptographic version chain. See §9 (Anchoring)."
         }
       },
       "additionalProperties": false
@@ -758,7 +764,7 @@ Published at `https://aioschema.org/schemas/v0.5.5/manifest.json`.
 
 > **Date columns:** *Authored* is when the version was created and anchored (immutable).
 > *Published* is when it became publicly available on aioschema.org.
-> These are distinct by design — see §18 and the header note above.
+> These are distinct by design — see §9 and the header note above.
 
 | Version | Authored | Published | Summary |
 |---|---|---|---|
