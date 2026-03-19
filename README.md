@@ -8,6 +8,8 @@ AIOSchema is an open standard for generating, anchoring, and verifying the prove
 - **Hub & Tools:** [aioschemahub.com](https://aioschemahub.com)
 - **Current version:** v0.5.5 (Technical Preview)
 
+> **Why now?**  
+> EU AI Act Article 50 (Aug 2026) and Digital Product Passport (2027+) require verifiable provenance. AIOSchema is the only open standard that’s lightweight, modular, and already implemented across five languages.
 ---
 
 ## What a manifest looks like
