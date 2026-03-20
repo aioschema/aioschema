@@ -72,6 +72,7 @@ function runGenerate(args) {
   try {
     const manifest = generateManifest(filePath, opts);
     const out      = sidecarPath(filePath);
+    fs.writeFileSync(out, JSON.stringify(manifest, null, 2), "utf8");
     console.log(`✓ Manifest written: ${out}`);
     console.log(`  asset_id:         ${manifest.core.asset_id}`);
     console.log(`  hash_original:    ${Array.isArray(manifest.core.hash_original)
