@@ -9,9 +9,17 @@
 
 ## Install
 
+## Install
 ```bash
 npm install -g @aioschema/cli
 ```
+
+> **Note:** npm package coming soon. Until then, clone the repo and run locally:
+> ```bash
+> git clone https://github.com/aioschema/aioschema.git
+> cd aioschema/cli
+> node cli.js --help
+> ```
 
 ---
 
