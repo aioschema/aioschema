@@ -1,6 +1,6 @@
 {
   "name": "@aioschema/cli",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "AIOSchema v0.5.5 — command-line tool for generating and verifying provenance manifests.",
   "main": "cli.js",
   "bin": {
