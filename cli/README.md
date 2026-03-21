@@ -14,13 +14,12 @@
 npm install -g @aioschema/cli
 ```
 
-> **Note:** npm package coming soon. Until then, clone the repo and run locally:
+> **Note:** You can also run directly from source without installing:
 > ```bash
 > git clone https://github.com/aioschema/aioschema.git
 > cd aioschema/cli
 > node cli.js --help
 > ```
-
 ---
 
 ## Usage
