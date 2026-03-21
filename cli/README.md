@@ -8,6 +8,7 @@
 ---
 
 ## Install
+
 ```bash
 npm install -g @aioschema/cli
 ```
@@ -18,6 +19,7 @@ npm install -g @aioschema/cli
 > cd aioschema/cli
 > node cli.js --help
 > ```
+
 ---
 
 ## Usage
@@ -54,6 +56,24 @@ myfile.pdf.aios.json   ← manifest
 ```
 
 The manifest cryptographically describes your file — what it is, when it existed, and who created it. Verifiable forever by any conforming AIOSchema implementation.
+
+---
+
+## Creator ID
+
+The `--creator-id` flag is optional but important.
+
+**Without it:** a new unique ID is auto-generated every time you run `generate`. Each file gets a different creator ID — there is no link between them. This is fine for one-off provenance but means you cannot prove that two files came from the same author.
+
+**With it:** every manifest you generate carries the same identity. Anyone verifying your files can confirm they all came from the same creator. This is the recommended approach for anyone publishing content, releasing software, or establishing a consistent authorship record.
+
+Your creator ID is derived from your Ed25519 public key and has the format:
+
+```
+ed25519-fp-<64 hex characters>
+```
+
+Generate it once, store it safely, and use it for all your files. See the [implementation docs](../implementations/API.md) for how to generate a keypair and derive your creator ID.
 
 ---
 
