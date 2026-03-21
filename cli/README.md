@@ -8,8 +8,6 @@
 ---
 
 ## Install
-
-## Install
 ```bash
 npm install -g @aioschema/cli
 ```
