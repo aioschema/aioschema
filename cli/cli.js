@@ -12,7 +12,7 @@
 
 const fs   = require("node:fs");
 const path = require("node:path");
-const aios = require("./aioschema_v055.js");
+const aios = require("@aioschema/js");
 
 const { generateManifest, verifyManifest, sidecarPath, SPEC_VERSION } = aios;
 
