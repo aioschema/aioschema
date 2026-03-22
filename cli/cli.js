@@ -179,7 +179,7 @@ EXAMPLES
   aioschema generate image.png --algorithm sha384
   aioschema generate article.md --creator-id  ed25519-fp-<hex> format
   aioschema generate article.md \\
-    --creator-id ed25519-fp-ebc64203390ddefc442ade9038e1ae18 \\
+    --creator-id  ed25519-fp-<hex> format \\
     --ext asset_name=article.md \\
     --ext asset_type=document \\
     --ext description="My article description"
