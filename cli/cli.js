@@ -167,7 +167,7 @@ COMMANDS
 
 OPTIONS (generate)
   --algorithm, -a   Hash algorithm: sha256 (default) or sha384
-  --creator-id      Creator ID in ed25519-fp-<hex> format
+  --creator-id      Creator ID in ed25519-fp-<hex> (format)
   --ext key=value   Add an extension field (repeatable)
 
 GLOBAL
@@ -177,9 +177,9 @@ GLOBAL
 EXAMPLES
   aioschema generate report.pdf
   aioschema generate image.png --algorithm sha384
-  aioschema generate article.md --creator-id  ed25519-fp-<hex> format
+  aioschema generate article.md --creator-id  ed25519-fp-<hex>
   aioschema generate article.md \\
-    --creator-id  ed25519-fp-<hex> format \\
+    --creator-id  ed25519-fp-<hex> \\
     --ext asset_name=article.md \\
     --ext asset_type=document \\
     --ext description="My article description"
