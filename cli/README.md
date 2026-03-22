@@ -34,6 +34,13 @@ aioschema generate myfile.pdf --algorithm sha384
 # Generate with your creator ID
 aioschema generate myfile.pdf --creator-id ed25519-fp-ebc64203390ddefc442ade9038e1ae18
 
+# Generate with extension fields
+aioschema generate article.md \
+  --creator-id ed25519-fp-ebc64203390ddefc442ade9038e1ae18 \
+  --ext asset_name=article.md \
+  --ext asset_type=document \
+  --ext description="My article about digital provenance"
+
 # Verify a file against its manifest
 aioschema verify myfile.pdf myfile.pdf.aios.json
 
@@ -56,6 +63,22 @@ myfile.pdf.aios.json   ← manifest
 ```
 
 The manifest cryptographically describes your file — what it is, when it existed, and who created it. Verifiable forever by any conforming AIOSchema implementation.
+
+---
+
+## Extension fields
+
+Use `--ext key=value` to add metadata to the manifest's `extensions` block. The flag is repeatable — pass it once per field:
+
+```bash
+aioschema generate article.md \
+  --creator-id ed25519-fp-ebc64203390ddefc442ade9038e1ae18 \
+  --ext asset_name=article.md \
+  --ext asset_type=document \
+  --ext description="LinkedIn article: Understanding Digital Provenance"
+```
+
+Extension fields are informational and do not affect Core Block integrity or Level 1 verification.
 
 ---
 
