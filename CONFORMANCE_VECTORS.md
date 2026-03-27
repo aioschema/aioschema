@@ -1,10 +1,10 @@
 # AIOSchema v0.5.5 Conformance Test Vector Registry
 
-This document maps the canonical test vector identifiers (TV-01 through TV-19) to their
+This document maps the canonical test vector identifiers (TV-01 through TV-18) to their
 implementations in all five reference test suites, and to the cross-verification
 deterministic vectors (CV-01 through CV-14).
 
-Any conforming AIOSchema implementation must pass all 19 test vectors to be considered
+Any conforming AIOSchema implementation must pass all 18 test vectors to be considered
 spec-compliant.
 
 ---
@@ -37,15 +37,20 @@ spec-compliant.
 | TV-17 | Anchor verified via `AnchorResolver` | `test_tv17_anchor_verified_success` | `verifyManifest with anchor_resolver verifies anchor` | `TV-17: Anchor verified` | *(anchor resolver not implemented)* | *(anchor resolver not implemented)* |
 | TV-18 | `anchor_reference` present, `verify_anchor=false` → warning not failure | `test_tv18_anchor_present_not_verified_warning` | `TV-18: anchor present, verifyAnchor=false — warning not failure` | `TV-18: Anchor present no verify — warning` | `TestVerifyManifest_AnchorWarningNotFailure` | `verify_anchor_warning_not_failure` |
 
-## v0.5.5 Test Vectors (TV-19)
+## TV-19 — Key Rotation Extension (not a v0.5.5 conformance requirement)
 
-| ID | Description | Python | TypeScript | Node.js | Go | Rust |
-|---|---|---|---|---|---|---|
-| TV-19a | Key rotation — v1 manifest signs with key A and anchors | *(pending)* | `TV-19a`–`TV-19e` (key rotation suite) | `TV-19a: v1 manifest signs with key A` | *(pending)* | *(pending)* |
-| TV-19b | Key rotation — v2 re-signed with key B, chains via `previous_version_anchor` | *(pending)* | *(see TV-19a suite)* | `TV-19b: v2 re-signs with key B` | *(pending)* | *(pending)* |
-| TV-19c | Key rotation is irreversible — v2 with old key A must fail | *(pending)* | *(see TV-19a suite)* | `TV-19c: old key A fails on v2` | *(pending)* | *(pending)* |
-| TV-19d | `creator_id` MAY change across rotation — both manifests valid independently | *(pending)* | *(see TV-19a suite)* | `TV-19d: creator_id change valid` | *(pending)* | *(pending)* |
-| TV-19e | Full chain — anchor resolver confirms version continuity | *(pending)* | *(see TV-19a suite)* | `TV-19e: full chain anchor verify` | *(pending)* | *(pending)* |
+TV-19 covers key rotation via `previous_version_anchor` chaining. It is implemented
+as an extension in the Node.js (5 sub-tests, TV-19a through TV-19e) and TypeScript
+suites. It has no backing in the v0.5.5 specification and is not required for
+v0.5.5 conformance. It will be canonicalized in v0.5.6.
+
+| ID | Description | Node.js | TypeScript |
+|---|---|---|---|
+| TV-19a | Key rotation — v1 manifest signs with key A and anchors | `TV-19a: v1 manifest signs with key A` | `TV-19a`--`TV-19e` (key rotation suite) |
+| TV-19b | Key rotation — v2 re-signed with key B, chains via `previous_version_anchor` | `TV-19b: v2 re-signs with key B` | *(see TV-19a suite)* |
+| TV-19c | Key rotation is irreversible — v2 with old key A must fail | `TV-19c: old key A fails on v2` | *(see TV-19a suite)* |
+| TV-19d | `creator_id` MAY change across rotation — both manifests valid independently | `TV-19d: creator_id change valid` | *(see TV-19a suite)* |
+| TV-19e | Full chain — anchor resolver confirms version continuity | `TV-19e: full chain anchor verify` | *(see TV-19a suite)* |
 
 ---
 

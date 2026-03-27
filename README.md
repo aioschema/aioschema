@@ -88,7 +88,9 @@ cargo test
 
 ## Conformance
 
-Any implementation must pass all 19 test vectors (TV-01 through TV-19) and all 14 cross-implementation deterministic vectors (CV-01 through CV-14). See [`CONFORMANCE_VECTORS.md`](./CONFORMANCE_VECTORS.md) and [`conformance/`](./conformance/).
+Any implementation must pass all 18 test vectors (TV-01 through TV-18) and all 14 cross-implementation deterministic vectors (CV-01 through CV-14). See [`CONFORMANCE_VECTORS.md`](./CONFORMANCE_VECTORS.md) and [`conformance/`](./conformance/).
+
+TV-19 (key rotation via `previous_version_anchor`) is implemented as an extension in the Node.js and TypeScript suites. It will be canonicalized in v0.5.6.
 
 | Implementation | Unit tests | CV vectors |
 |---|---|---|
