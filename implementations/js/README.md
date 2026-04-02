@@ -5,7 +5,6 @@
 Pure CommonJS. Zero external dependencies. Requires Node.js ≥ 18.
 
 - Spec: [aioschema.org](https://aioschema.org)
-- Hub: [aioschemahub.com](https://aioschemahub.com)
 
 ---
 
