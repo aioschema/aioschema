@@ -39,4 +39,3 @@ limitations under the License.
 
 AIOSchema is authored and maintained by Ovidiu Ancuta.  
 Website: https://aioschema.org  
-Hub: https://aioschemahub.com
