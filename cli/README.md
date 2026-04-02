@@ -3,7 +3,6 @@
 **AIOSchema v0.5.5 — Command-line tool for generating and verifying provenance manifests.**
 
 - Spec: [aioschema.org](https://aioschema.org)
-- Hub: [aioschemahub.com](https://aioschemahub.com)
 
 ---
 
