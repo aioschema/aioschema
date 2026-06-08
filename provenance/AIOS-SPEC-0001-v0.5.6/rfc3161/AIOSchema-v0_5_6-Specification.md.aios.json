@@ -1,0 +1,35 @@
+{
+  "core": {
+    "asset_id": "019ea8d4-59d7-7a20-8ac4-52f7420c2ca5",
+    "schema_version": "0.5.6",
+    "creation_timestamp": "2026-06-08T20:02:29Z",
+    "hash_original": "sha256-f90b381625b2b92587aeba55e4488f4ad69cf330817950cb288a3b925c1b757a",
+    "creator_id": "ed25519-fp-ebc64203390ddefc442ade9038e1ae18",
+    "core_fingerprint": "sha256-2ad099c1bc5df02bdeee3eb9c2803a22e325282c1bb3da557d1afb1535d2b595",
+    "signature": "ed25519-e304f5ffebed0527e5a31a465b11e739888888c50e365b19c8c934f85c70bf84c2feff8db363ee90635235f92d5d415fb3a25feb25adcc3555365c7a6b2ee60f",
+    "manifest_signature": "ed25519-fc709ab4462e1c45b087f3cbdad0177d8587ed7ef54e088a7353a0a9a83c4166d7b7858a67ab26cfb388b8861b9d8a97df062f36f3a6e2df6d887e66bd332a0c",
+    "anchor_reference": "aios-anchor:rfc3161-freetsa:f90b381625b2b92587aeba55e4488f4ad69cf330817950cb288a3b925c1b757a",
+    "previous_version_anchor": "aios-anchor:ots:d1fda27d93edba7aafe1097f3714a0ffab12351eb5a078d8f119990daa750f66"
+  },
+  "extensions": {
+    "asset_name": "AIOSchema-v0_5_6-Specification.md",
+    "license": "CC-BY-4.0",
+    "description": "AIOSchema is an open standard built on a lightweight, extensible architecture for establishing, maintaining, and preserving the integrity, authenticity, and provenance of digital and physical assets.",
+    "ai_declaration": {
+      "disclosure_required": false,
+      "ai_generated": false,
+      "ai_manipulated": false,
+      "human_reviewed": true,
+      "standard_editing": false,
+      "creative_work": false
+    },
+    "compliance": {
+      "eu_art50": {
+        "editorial_responsibility": "Ovidiu Ancuta, AIOSchema Project",
+        "review_type": "substantive"
+      }
+    },
+    "public_key": "Fi00S1HLbSi+eXOLuFDByIBNW9vOBbTZ3nsYbISeBlY=",
+    "compliance_level": 3
+  }
+}

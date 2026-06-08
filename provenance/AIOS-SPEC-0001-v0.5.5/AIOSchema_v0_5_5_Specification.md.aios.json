@@ -1,0 +1,22 @@
+{
+  "core": {
+    "asset_id": "aioschema-v0.5.5-specification",
+    "schema_version": "0.5.5",
+    "creation_timestamp": "2026-03-07T00:00:00Z",
+    "hash_original": "sha256-d1fda27d93edba7aafe1097f3714a0ffab12351eb5a078d8f119990daa750f66",
+    "core_fingerprint": "sha256-d1fda27d93edba7aafe1097f3714a0ffab12351eb5a078d8f119990daa750f66",
+    "creator_id": "ed25519-fp-ebc64203390ddefc442ade9038e1ae18",
+    "anchor_reference": "aios-anchor:ots:d1fda27d93edba7aafe1097f3714a0ffab12351eb5a078d8f119990daa750f66",
+    "signature": null,
+    "manifest_signature": null,
+    "previous_version_anchor": "aios-anchor:ots:76f369dd970caa3787c21f68bde18adb83bf5b2b2d3f2c58779b728421bb1261"
+  },
+  "extensions": {
+    "x-aioschema-spec": {
+      "doc_id": "AIOSchema-v0.5.5-Specification",
+      "version": "0.5.5",
+      "status": "published",
+      "label": "Technical Review"
+    }
+  }
+}
