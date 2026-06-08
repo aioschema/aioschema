@@ -30,7 +30,7 @@ AIOSchema is an open standard for generating, anchoring, and verifying the prove
     "creator_id": "ed25519-fp-7fcc5530c17565c99ea02d846ab0b5eb",
     "signature": "ed25519-<128-hex>",
     "manifest_signature": "ed25519-<128-hex>",
-    "anchor_reference": "aios-anchor:rfc3161-aimoda:abc123"
+    "anchor_reference": "aios-anchor:rfc3161:abc123"
   },
   "extensions": {
     "compliance_level": 3,
@@ -40,9 +40,11 @@ AIOSchema is an open standard for generating, anchoring, and verifying the prove
       "ai_manipulated": false,
       "human_reviewed": true
     },
-    "compliance_eu_art50": {
-      "editorial_responsibility": "Organisation Legal Name",
-      "review_type": "substantive"
+    "compliance": {
+      "eu_art50": {
+        "editorial_responsibility": "Organisation Legal Name",
+        "review_type": "substantive"
+      }
     }
   }
 }
@@ -57,8 +59,7 @@ One file alongside your asset. Verifiable forever, by anyone, with no central au
 ```
 aioschema/
 ├── spec/                        Specification documents
-├── schemas/v0.5.6/              JSON Schema (manifest.json)
-├── conformance/                 Test vectors and cross-verify suite
+├── conformance/                 Test vectors (TV-01 to TV-25) and cross-verify suite (CV-01 to CV-18)
 ├── implementations/
 │   ├── js/                      Node.js 18+
 │   ├── python/                  Python 3.9+
@@ -66,6 +67,9 @@ aioschema/
 │   ├── go/                      Go 1.21+
 │   ├── rust/                    Rust 2021
 │   └── dotnet/                  .NET 8, zero external dependencies
+├── cli/                         @aioschema/cli command-line tool
+├── provenance/                  Versioned provenance records for this specification
+├── publications/                Position papers and white papers
 └── API.md                       Language-neutral API contracts
 ```
 
