@@ -1,0 +1,35 @@
+{
+  "id": "TV-19",
+  "level": 2,
+  "category": "public-key",
+  "description": "extensions.public_key fingerprint matches creator_id. Both core.signature and manifest_signature must verify.",
+  "input": {
+    "manifest": {
+      "core": {
+        "asset_id": "019c7cb0-6e40-7f21-873b-9a9cf13e461b",
+        "schema_version": "0.5.6",
+        "creation_timestamp": "2026-05-10T12:00:00Z",
+        "hash_original": "sha256-45880b5668c1271d3546dc2f8ec4d8bed1fbf9deb986b76da73b1ea459a6d492",
+        "creator_id": "ed25519-fp-ebc64203390ddefc442ade9038e1ae18",
+        "core_fingerprint": "sha256-110582f44b47ff1258969484b4213566c680bd812c5b953e0b350e573412942a",
+        "signature": "ed25519-3bd40ead55a2820d6cc704bd191a0038748db4480ff752e418d996e0fccfc1811effd253e166c513025576f76aff173af819f5c73f80f77fa1a30915679b900d",
+        "manifest_signature": "ed25519-87c0303bc5865c61809bf6b2f4ddea24d73c68105f2f754d660573b6c2672fb0a4c26899b440cd5f0028dcb173526d67baa5fc293806462e6f5d5b3120252307",
+        "anchor_reference": null,
+        "previous_version_anchor": null
+      },
+      "extensions": {
+        "public_key": "Fi00S1HLbSi+eXOLuFDByIBNW9vOBbTZ3nsYbISeBlY="
+      }
+    },
+    "asset_data_hex": "41494f536368656d6120746573742061737365742076302e352e36202d2063616e6f6e6963616c207265666572656e636520636f6e74656e7420666f7220636f6e666f726d616e63652074657374696e672e",
+    "public_key_b64": "Fi00S1HLbSi+eXOLuFDByIBNW9vOBbTZ3nsYbISeBlY=",
+    "verify_anchor": false
+  },
+  "expected": {
+    "success": true,
+    "match_type": "hard",
+    "signature_verified": true,
+    "manifest_signature_verified": true,
+    "public_key_fingerprint_match": true
+  }
+}

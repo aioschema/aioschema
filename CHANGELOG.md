@@ -1,91 +1,102 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright 2026 Ovidiu Ancuta -->
+<!--
+     AIOSchema monorepo root CHANGELOG
+     https://aioschema.org
+-->
+
 # Changelog
 
-All notable changes to the AIOSchema specification and reference implementations.
+All notable changes to the AIOSchema standard and reference implementations
+are documented here. This file covers the monorepo root. Each implementation
+has its own CHANGELOG or version history in its subdirectory.
 
 ---
 
-## v0.5.5 — March 17, 2026
-
-**The stable foundation release.** First and only published version. Five independent
-reference implementations with a fully cross-verified conformance test suite.
+## v0.5.6 (2026-06-06)
 
 ### Specification
 
-- Renamed `hash_schema_block` to `core_fingerprint` throughout — old name accepted as alias for backward compatibility
-- Renamed `anchor_resolver` parameter to `anchorResolver` in implementation APIs
-- Added §0 Design Philosophy: Language Neutrality, Universality, Minimalism, Verifiability, Openness
-- Added C2PA comparison and positioning (complementary trust models, not competing)
-- Added RFC 3161 timestamp authority support in §9 anchoring
-- Added `manifest_signature` field — signs the entire manifest including extensions
-- Added multi-hash support — `hash_original` may be a string or array of strings
-- Formalized 12-step verification procedure in §10
-- Formalized `AnchorResolver` callback contract in §9.2
-- Added `previous_version_anchor` field for version chain support
+- **`compliance_eu_art50` replaces `x-aioschema-eu_art50`**
+
+  The vendor-prefixed key `x-aioschema-eu_art50` is replaced by
+  `compliance_eu_art50` under the `extensions.compliance` namespace. The
+  field carries exactly two normative sub-fields: `editorial_responsibility`
+  (MUST) and `review_type` (MUST when claiming the EU AI Act Art. 50(4)
+  exemption). Personal data fields (`reviewer_name`, `reviewer_role`,
+  `reviewer_contact`) are not part of the standard; they remain in deployer
+  internal records per GDPR Art. 5(1)(c).
+
+- **TV-19 to TV-25 canonicalized**
+
+  Seven new test vectors added to `test-vectors/v0.5.6/`:
+
+  | Vector | Category | Outcome |
+  |---|---|---|
+  | TV-19 | public-key binding | `public_key` fingerprint matches `creator_id`; PASS |
+  | TV-20 | public-key binding | `public_key` fingerprint mismatch; FAIL |
+  | TV-21 | ai-declaration | valid `standard_editing=false` constraint; PASS |
+  | TV-22 | ai-declaration | `standard_editing=true` conflict with §11.1; FAIL |
+  | TV-23 | extension-size | extensions at 4096-byte limit; PASS |
+  | TV-24 | extension-size | extensions at 4097 bytes, one over limit; FAIL |
+  | TV-25 | compliance | `compliance_eu_art50` warning pattern; WARN |
+
+- **CV-15 to CV-18 added**
+
+  Four new cross-verification vectors bring the total to 18. All six
+  implementations are required to pass all 18 vectors.
+
+- **`manifest.json` schema updated**
+
+  `conformance/cross_verify_vectors.json` updated: `schema_version` fields
+  set to `"0.5.6"`, CV-05 and CV-06 expected values recomputed.
 
 ### Reference implementations
 
-- **Python** (`implementations/python/`) — 108 tests, all passing, 14/14 CV vectors
-- **TypeScript** (`implementations/typescript/`) — 70 tests, all passing, 14/14 CV vectors
-- **Node.js** (`implementations/js/`) — 80 tests, all passing, 14/14 CV vectors
-- **Go** (`implementations/go/`) — 27 tests, all passing, 14/14 CV vectors
-- **Rust** (`implementations/rust/`) — 30 tests, all passing, 14/14 CV vectors
+All six implementations updated to v0.5.6 conformance. SPDX Apache-2.0
+headers and closing footers applied to every source and documentation file.
+Inline per-file changelog blocks removed; history lives in CHANGELOG.md only.
 
-### Conformance
+| Implementation | Path | Key changes |
+|---|---|---|
+| Jekyll plugin (Ruby) | `jekyll-aioschema/` | `compliance_eu_art50` two-field struct; `sidecar_valid?` SPEC_VERSION guard; `anchor_reference` array guard; bumped v1.4.8 |
+| JS/Node.js | `implementations/js/` | `compliance_eu_art50`; default TSA `rfc3161.ai.moda`; TV-25 wired |
+| Go | `implementations/go/` | `compliance_eu_art50`; TV-25 (`TestTV25_ComplianceEuArt50`); README and LICENSE added |
+| Rust | `implementations/rust/` | `compliance_eu_art50`; TV-25 (`tv25_compliance_eu_art50`); README and LICENSE added |
+| TypeScript | `implementations/typescript/` | `compliance_eu_art50`; default TSA `rfc3161.ai.moda`; TV-25 wired; README and LICENSE added |
+| Python | `implementations/python/` | `compliance_eu_art50`; default TSA `rfc3161.ai.moda`; TV-25 (`TestTV25ComplianceEuArt50`); README and LICENSE added |
+| .NET (C#) | `implementations/dotnet/` | Zero-dependency (BouncyCastle batch superseded); `SpecVersion` `"0.5.6"`; TV-25 (`RunTV25()`); README added |
 
-- TV-01 through TV-19 formally defined and implemented across all suites
-- CV-01 through CV-14 deterministic cross-implementation vectors in `conformance/cross_verify_vectors.json`
-- Bootstrap rule verified in all five implementations: `core_fingerprint` absent from `CORE_HASH_FIELDS`
+### Tools
 
----
+- Provenance Studio v24.8 (`tools/provenance-studio/`)
+- CLI v0.5.14 (`tools/cli/`)
 
-## v0.5.1 — February 2026 *(Founding provenance record — not published)*
+### Repo hygiene
 
-- Added `previous_version_anchor` field for version chain support
-- Soft binding threshold capped at `SOFT_BINDING_THRESHOLD_MAX`
-- Minor field validation improvements
-
-## v0.5 — February 2026 *(Founding provenance record — not published)*
-
-- Added `manifest_signature` concept (preliminary)
-- Added `anchor_reference` field
-- Multi-hash `hash_original` array support (preliminary)
-
-## v0.4 — February 2026 *(Founding provenance record — not published)*
-
-- Added Ed25519 `signature` field
-- Added `creator_id` with `ed25519-fp-` format
-- UUID v7 `asset_id` required for new manifests
-
-## v0.3.1 — February 2026 *(Founding provenance record — not published)*
-
-- Patch: timestamp validation requires UTC `Z` suffix
-
-## v0.3 — February 2026 *(Founding provenance record — not published)*
-
-- Added `extensions` block
-- Added soft binding via `extensions.soft_binding` pHash
-
-## v0.2 — February 2026 *(Founding provenance record — not published)*
-
-- Added `hash_schema_block` (now `core_fingerprint`)
-- SHA-384 and SHA3-256 algorithm support
-
-## v0.1 — February 2026 *(Founding provenance record — not published)*
-
-- Initial release
-- `asset_id`, `hash_original`, `creation_timestamp`, `creator_id`
-- SHA-256 only
+- SPDX headers and closing footers on all source and documentation files
+- JSON files: no header or footer (no comment syntax in JSON)
+- `Cargo.lock`, `go.mod`: no header or footer
+- `test_tv19_debug.ts` excluded from the repo (development scratch file)
+- `_rustc_info.json` excluded via `.gitignore` (build artifact)
+- `.gitignore` written at repo root covering all seven languages
 
 ---
 
-## Supported versions
+## v0.5.5 (2026-03-14)
 
-v0.5.5 is the first and only published version of AIOSchema. Versions v0.1 through
-v0.5.1 are founding provenance records — cryptographically anchored prior art establishing
-the development lineage, but never publicly released.
+Initial public anchored release. RFC 3161 anchor serial `03801FB4`,
+timestamp `2026-03-14T04:08:39Z` (FreeTSA). Genesis OTS anchor: Bitcoin
+block 939726.
 
-v0.5.5 verifiers accept the following `schema_version` values to preserve the integrity
-of the founding provenance chain. These values appear in the anchored founding record
-manifests and must remain verifiable:
+- Five reference implementations: JS, Go, Rust, TypeScript, Python
+- TV-01 to TV-18 test vector suite
+- CV-01 to CV-14 cross-verification vectors
 
-`0.1` `0.2` `0.3` `0.3.1` `0.4` `0.5` `0.5.1` `0.5.5`
+---
+
+## Earlier versions
+
+See git history for v0.4 and earlier.
+
+<!-- end AIOSchema monorepo root CHANGELOG | https://aioschema.org -->

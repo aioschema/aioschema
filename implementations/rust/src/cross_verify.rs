@@ -1,19 +1,16 @@
-//! cross_verify.rs
-//!
-//! Loads `cross_verify_vectors.json` and asserts all 14 CV vectors pass.
-//!
-//! Run with:
-//!   AIOSCHEMA_VECTORS=/path/to/cross_verify_vectors.json cargo test
-//!
-//! If the env var is not set, the test looks for the file at
-//! `../../cross_verify_vectors.json` relative to the crate root (i.e.
-//! the project root when the crate lives at `implementations/rust/`).
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/rust v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
 
 use aioschema::{
     algorithms::canonical_core_fields,
     canonical_json, compute_hash, parse_hash_prefix, verify_manifest, Manifest,
     VerifyOptions, CORE_HASH_FIELDS,
 };
+use base64;
+use base64::Engine;
 use hex;
 use serde::Deserialize;
 use serde_json::Value;
@@ -76,7 +73,7 @@ fn test_cross_verify_all_vectors() {
         vf.vectors.len(),
         vf.spec_version
     );
-    assert_eq!(vf.vectors.len(), 14, "expected 14 CV vectors");
+    assert!(vf.vectors.len() >= 14, "expected at least 14 CV vectors");
 
     let mut failures = 0usize;
 
@@ -202,7 +199,7 @@ fn run_core_fingerprint_vector(v: &Vector) -> bool {
     }
 }
 
-// ── CV-07..CV-14: Manifest verification ──────────────────────────────────────
+// ── CV-07..CV-18: Manifest verification ────────────────────────────────────
 
 fn run_manifest_verify_vector(v: &Vector) -> bool {
     let asset_hex     = v.inputs["asset_hex"].as_str().unwrap();
@@ -221,8 +218,6 @@ fn run_manifest_verify_vector(v: &Vector) -> bool {
         Ok(m) => m,
         Err(e) => {
             eprintln!("    deserialize manifest: {e}");
-            // A deserialization failure means the manifest is structurally invalid.
-            // If the vector expects success=false, this is the correct outcome.
             if !exp_success {
                 return true;
             }
@@ -230,7 +225,18 @@ fn run_manifest_verify_vector(v: &Vector) -> bool {
         }
     };
 
-    let result = match verify_manifest(&asset_data, &manifest, &VerifyOptions::default()) {
+    // Decode public key if provided
+    let pub_key_bytes: Option<Vec<u8>> = v.inputs
+        .get("public_key_b64")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty())
+        .map(|s| base64::engine::general_purpose::STANDARD.decode(s).unwrap());
+    let opts = VerifyOptions {
+        public_key: pub_key_bytes.as_deref(),
+        ..VerifyOptions::default()
+    };
+
+    let result = match verify_manifest(&asset_data, &manifest, &opts) {
         Ok(r) => r,
         Err(e) => {
             eprintln!("    verify_manifest returned Err: {e}");
@@ -261,5 +267,14 @@ fn run_manifest_verify_vector(v: &Vector) -> bool {
         }
     }
 
+    // If vector specifies message_contains, check it
+    if let Some(exp_msg) = v.expected.get("message_contains").and_then(|v| v.as_str()) {
+        if !result.message.contains(exp_msg) {
+            eprintln!("    message does not contain {exp_msg}: {}", result.message);
+            return false;
+        }
+    }
+
     true
 }
+// -- end aioschema/rust v0.5.6 | AIOSchema spec v0.5.6 --

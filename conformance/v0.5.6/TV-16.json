@@ -1,0 +1,29 @@
+{
+  "id": "TV-16",
+  "level": 1,
+  "category": "core",
+  "description": "Single sha384 hash (no sha256). Must verify correctly.",
+  "input": {
+    "manifest": {
+      "core": {
+        "asset_id": "019c7cb0-6e40-7f21-873b-9a9cf13e461b",
+        "schema_version": "0.5.6",
+        "creation_timestamp": "2026-05-10T12:00:00Z",
+        "hash_original": "sha384-abb599d7cd40a7855316c6d149344414990ad10d8bcd7f5310fe58ee4bf744f27cac80d9df6fe7f05ca50eb94756c662",
+        "creator_id": "019c7cb0-6e40-7f21-873b-9a9cf13e4000",
+        "signature": null,
+        "manifest_signature": null,
+        "anchor_reference": null,
+        "previous_version_anchor": null,
+        "core_fingerprint": "sha256-f2cb892e1b8e17d7ce6cd97069baf79bca25c299ac0bb4a5952bee1e3590a0de"
+      }
+    },
+    "asset_data_hex": "41494f536368656d6120746573742061737365742076302e352e36202d2063616e6f6e6963616c207265666572656e636520636f6e74656e7420666f7220636f6e666f726d616e63652074657374696e672e",
+    "public_key_b64": null,
+    "verify_anchor": false
+  },
+  "expected": {
+    "success": true,
+    "match_type": "hard"
+  }
+}

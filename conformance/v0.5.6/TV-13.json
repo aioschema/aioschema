@@ -1,0 +1,59 @@
+{
+  "id": "TV-13",
+  "level": 1,
+  "category": "core",
+  "description": "Multi-hash manifest with sha256 and sha384. Part A: both hashes correct \u2014 must pass. Part B: sha256 wrong but sha384 correct \u2014 must still pass (any supported match succeeds).",
+  "input_a": {
+    "manifest": {
+      "core": {
+        "asset_id": "019c7cb0-6e40-7f21-873b-9a9cf13e461b",
+        "schema_version": "0.5.6",
+        "creation_timestamp": "2026-05-10T12:00:00Z",
+        "hash_original": [
+          "sha256-45880b5668c1271d3546dc2f8ec4d8bed1fbf9deb986b76da73b1ea459a6d492",
+          "sha384-abb599d7cd40a7855316c6d149344414990ad10d8bcd7f5310fe58ee4bf744f27cac80d9df6fe7f05ca50eb94756c662"
+        ],
+        "creator_id": "019c7cb0-6e40-7f21-873b-9a9cf13e4000",
+        "signature": null,
+        "manifest_signature": null,
+        "anchor_reference": null,
+        "previous_version_anchor": null,
+        "core_fingerprint": "sha256-afbe43f97283fb5df16612531c80df7ecebf90eff3e13a1bc840be8a92adb285"
+      }
+    },
+    "asset_data_hex": "41494f536368656d6120746573742061737365742076302e352e36202d2063616e6f6e6963616c207265666572656e636520636f6e74656e7420666f7220636f6e666f726d616e63652074657374696e672e",
+    "public_key_b64": null,
+    "verify_anchor": false
+  },
+  "expected_a": {
+    "success": true,
+    "match_type": "hard"
+  },
+  "input_b": {
+    "manifest": {
+      "core": {
+        "asset_id": "019c7cb0-6e40-7f21-873b-9a9cf13e461b",
+        "schema_version": "0.5.6",
+        "creation_timestamp": "2026-05-10T12:00:00Z",
+        "hash_original": [
+          "sha256-deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "sha384-abb599d7cd40a7855316c6d149344414990ad10d8bcd7f5310fe58ee4bf744f27cac80d9df6fe7f05ca50eb94756c662"
+        ],
+        "creator_id": "019c7cb0-6e40-7f21-873b-9a9cf13e4000",
+        "signature": null,
+        "manifest_signature": null,
+        "anchor_reference": null,
+        "previous_version_anchor": null,
+        "core_fingerprint": "sha256-5187c6b34e0dc64729e9f8f8e6183ada8f902904f56ec83f2903384aa00b3908"
+      }
+    },
+    "asset_data_hex": "41494f536368656d6120746573742061737365742076302e352e36202d2063616e6f6e6963616c207265666572656e636520636f6e74656e7420666f7220636f6e666f726d616e63652074657374696e672e",
+    "public_key_b64": null,
+    "verify_anchor": false,
+    "note": "sha256 is intentionally wrong; sha384 is correct"
+  },
+  "expected_b": {
+    "success": true,
+    "match_type": "hard"
+  }
+}

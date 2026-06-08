@@ -1,8 +1,17 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/go v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
+
 package aioschema
 
 import (
+	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -23,6 +32,10 @@ type GenerateOptions struct {
 	// PrivateKeyHex is the Ed25519 private key as hex (64 bytes = 128 hex chars).
 	// When set, the manifest core is signed and creator_id is derived from the public key.
 	PrivateKeyHex string
+
+	// PrivateKey is an Ed25519 private key (64 bytes). When set, takes precedence over PrivateKeyHex.
+	// Both core signature and manifest_signature are generated.
+	PrivateKey ed25519.PrivateKey
 
 	// Extensions is merged into the manifest extensions block.
 	Extensions map[string]interface{}
@@ -110,7 +123,81 @@ func GenerateManifest(assetData []byte, opts GenerateOptions) (*Manifest, error)
 		Extensions: extensions,
 	}
 
+	// Sign if private key provided
+	if len(opts.PrivateKey) > 0 {
+		if err := SignManifest(manifest, opts.PrivateKey); err != nil {
+			return nil, fmt.Errorf("sign manifest: %w", err)
+		}
+	}
+
 	return manifest, nil
+}
+
+// SignManifest signs both the core fields and the full manifest using Ed25519.
+// It sets manifest.Core.Signature and manifest.Core.ManifestSignature.
+func SignManifest(m *Manifest, privateKey ed25519.PrivateKey) error {
+	// Build core map for signing (without signature fields)
+	coreMap := map[string]interface{}{
+		"asset_id":           m.Core.AssetID,
+		"schema_version":     m.Core.SchemaVersion,
+		"creation_timestamp": m.Core.CreationTimestamp,
+		"hash_original":      m.Core.HashOriginal,
+		"creator_id":         m.Core.CreatorID,
+	}
+	if m.Core.EffectiveCoreFingerprint() != nil {
+		coreMap["core_fingerprint"] = *m.Core.EffectiveCoreFingerprint()
+	}
+
+	coreBytes, err := canonicalCoreFields(coreMap)
+	if err != nil {
+		return fmt.Errorf("canonical core fields: %w", err)
+	}
+
+	// Core signature
+	coreSig := ed25519.Sign(privateKey, coreBytes)
+	sigStr := "ed25519-" + hex.EncodeToString(coreSig)
+	m.Core.Signature = &sigStr
+
+	// Manifest signature (over full manifest with core_signature set, manifest_signature null)
+	fullMap, err := manifestToMap(m)
+	if err != nil {
+		return fmt.Errorf("manifest to map: %w", err)
+	}
+
+	// Ensure manifest_signature is null in the map for signing
+	if core, ok := fullMap["core"].(map[string]interface{}); ok {
+		core["manifest_signature"] = nil
+	}
+
+	mBytes, err := CanonicalJSON(fullMap)
+	if err != nil {
+		return fmt.Errorf("canonical manifest: %w", err)
+	}
+
+	mSig := ed25519.Sign(privateKey, mBytes)
+	mSigStr := "ed25519-" + hex.EncodeToString(mSig)
+	m.Core.ManifestSignature = &mSigStr
+
+	return nil
+}
+
+// CreatorIDFromPublicKey derives an ed25519-fp- creator_id from an Ed25519 public key.
+func CreatorIDFromPublicKey(pub ed25519.PublicKey) string {
+	h := sha256.Sum256(pub)
+	return "ed25519-fp-" + hex.EncodeToString(h[:16])
+}
+
+// manifestToMap converts a Manifest to a map[string]interface{} for canonical JSON.
+func manifestToMap(m *Manifest) (map[string]interface{}, error) {
+	data, err := json.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	var result map[string]interface{}
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // LoadManifest reads a sidecar .aios.json file from disk.
@@ -165,3 +252,4 @@ func newUUIDv7() string {
 	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x",
 		b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
 }
+// -- end aioschema/go v0.5.6 | AIOSchema spec v0.5.6 --

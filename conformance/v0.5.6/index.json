@@ -1,0 +1,170 @@
+{
+  "schema_version": "0.5.6",
+  "generated": "2026-05-10",
+  "asset_data_note": "All vectors using asset_data_hex encode the same canonical reference asset: UTF-8 bytes of 'AIOSchema test asset v0.5.6 - canonical reference content for conformance testing.'",
+  "keypair_note": "Vectors TV-06, TV-07, TV-13 through TV-18 use a freshly generated Ed25519 keypair whose public key is embedded in each vector's input.public_key_b64. TV-07 uses a second keypair (pub2) to demonstrate signature rejection. TV-19 and TV-20 use a separate keypair for public_key fingerprint cross-check tests.",
+  "categories": {
+    "core": "Basic field presence, hash verification, fingerprint, multi-hash",
+    "tamper": "Tampered fields that must cause verification failure",
+    "soft-binding": "Perceptual hash (pHash) soft matching",
+    "signature": "Ed25519 signature and manifest_signature verification",
+    "schema-validation": "Invalid field values, missing fields, unsupported versions",
+    "anchor": "anchor_reference and anchor_resolver flows",
+    "public-key": "extensions.public_key fingerprint cross-check (\u00a711.3)",
+    "ai-declaration": "ai_declaration constraint validation (\u00a711.1)",
+    "extension-size": "Extension block size limit enforcement (\u00a76.3)",
+    "compliance": "compliance_eu_art50 structured disclosure (\u00a711.2.1)"
+  },
+  "vectors": [
+    {
+      "id": "TV-01",
+      "level": 1,
+      "category": "core",
+      "file": "TV-01.json"
+    },
+    {
+      "id": "TV-02",
+      "level": 1,
+      "category": "tamper",
+      "file": "TV-02.json"
+    },
+    {
+      "id": "TV-03",
+      "level": 1,
+      "category": "tamper",
+      "file": "TV-03.json"
+    },
+    {
+      "id": "TV-04",
+      "level": 2,
+      "category": "soft-binding",
+      "file": "TV-04.json"
+    },
+    {
+      "id": "TV-05",
+      "level": 2,
+      "category": "soft-binding",
+      "file": "TV-05.json"
+    },
+    {
+      "id": "TV-06",
+      "level": 2,
+      "category": "signature",
+      "file": "TV-06.json"
+    },
+    {
+      "id": "TV-07",
+      "level": 2,
+      "category": "signature",
+      "file": "TV-07.json"
+    },
+    {
+      "id": "TV-08",
+      "level": 1,
+      "category": "core",
+      "file": "TV-08.json"
+    },
+    {
+      "id": "TV-09",
+      "level": 1,
+      "category": "schema-validation",
+      "file": "TV-09.json"
+    },
+    {
+      "id": "TV-10",
+      "level": 1,
+      "category": "schema-validation",
+      "file": "TV-10.json"
+    },
+    {
+      "id": "TV-11",
+      "level": 1,
+      "category": "schema-validation",
+      "file": "TV-11.json"
+    },
+    {
+      "id": "TV-12",
+      "level": 1,
+      "category": "schema-validation",
+      "file": "TV-12.json"
+    },
+    {
+      "id": "TV-13",
+      "level": 1,
+      "category": "core",
+      "file": "TV-13.json"
+    },
+    {
+      "id": "TV-14",
+      "level": 2,
+      "category": "signature",
+      "file": "TV-14.json"
+    },
+    {
+      "id": "TV-15",
+      "level": 2,
+      "category": "tamper",
+      "file": "TV-15.json"
+    },
+    {
+      "id": "TV-16",
+      "level": 1,
+      "category": "core",
+      "file": "TV-16.json"
+    },
+    {
+      "id": "TV-17",
+      "level": 3,
+      "category": "anchor",
+      "file": "TV-17.json"
+    },
+    {
+      "id": "TV-18",
+      "level": 3,
+      "category": "anchor",
+      "file": "TV-18.json"
+    },
+    {
+      "id": "TV-19",
+      "level": 2,
+      "category": "public-key",
+      "file": "TV-19.json"
+    },
+    {
+      "id": "TV-20",
+      "level": 2,
+      "category": "public-key",
+      "file": "TV-20.json"
+    },
+    {
+      "id": "TV-21",
+      "level": 2,
+      "category": "ai-declaration",
+      "file": "TV-21.json"
+    },
+    {
+      "id": "TV-22",
+      "level": 2,
+      "category": "ai-declaration",
+      "file": "TV-22.json"
+    },
+    {
+      "id": "TV-23",
+      "level": 2,
+      "category": "extension-size",
+      "file": "TV-23.json"
+    },
+    {
+      "id": "TV-24",
+      "level": 2,
+      "category": "extension-size",
+      "file": "TV-24.json"
+    },
+    {
+      "id": "TV-25",
+      "level": 2,
+      "category": "compliance",
+      "file": "TV-25.json"
+    }
+  ]
+}

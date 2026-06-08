@@ -1,74 +1,132 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright 2026 Ovidiu Ancuta -->
+<!-- aioschema/cli v0.5.13 | AIOSchema spec v0.5.6 | https://aioschema.org -->
+
 # @aioschema/cli
-**AIOSchema v0.5.5 — Command-line tool for generating and verifying provenance manifests.**
+**AIOSchema v0.5.6: Command-line tool for generating and verifying provenance manifests.**
 - Spec: [aioschema.org](https://aioschema.org)
+
 ---
+
 ## Install
+
 ```bash
 npm install -g @aioschema/cli
 ```
+
 Available commands and options are printed automatically after install.
 
 > **Note:** You can also run directly from source without installing:
 > ```bash
 > git clone https://github.com/aioschema/aioschema.git
-> cd aioschema/cli
+> cd aioschema/tools/cli
 > node cli.js --help
 > ```
+
 ---
+
 ## Usage
+
 ```bash
-# Generate a manifest for any file
+# Generate a keypair (do once; store private_key securely)
+aioschema keygen
+
+# Generate an unsigned manifest (Level 1)
 aioschema generate myfile.pdf
+
 # Generate with SHA-384
 aioschema generate myfile.pdf --algorithm sha384
-# Generate with your creator ID
+
+# Generate with your creator ID (Level 1, attributed)
 aioschema generate myfile.pdf --creator-id ed25519-fp-ebc64203390ddefc442ade9038e1ae18
-# Generate with extension fields
+
+# Generate a signed manifest (Level 2)
+aioschema generate myfile.pdf --private-key <base64-private-key>
+
+# Generate signed with extensions (Level 2)
 aioschema generate article.md \
-  --creator-id ed25519-fp-ebc64203390ddefc442ade9038e1ae18 \
+  --private-key <base64-private-key> \
   --ext asset_name=article.md \
   --ext asset_type=document \
   --ext description="My article about digital provenance"
-# Verify a file against its manifest
+
+# Verify an unsigned manifest (Level 1)
 aioschema verify myfile.pdf myfile.pdf.aios.json
+
+# Verify a signed manifest (Level 2)
+aioschema verify myfile.pdf myfile.pdf.aios.json --public-key <base64-public-key>
+
 # Help
 aioschema --help
+
 # Version
 aioschema --version
 ```
+
 ---
+
 ## What it produces
+
 Running `aioschema generate` writes a `.aios.json` manifest alongside your file:
+
 ```
 myfile.pdf
 myfile.pdf.aios.json   ← manifest
 ```
-The manifest cryptographically describes your file — what it is, when it existed, and who created it. Verifiable forever by any conforming AIOSchema implementation.
+
+The manifest cryptographically describes your file: what it is, when it existed, and who created it. Verifiable forever by any conforming AIOSchema implementation.
+
 ---
+
+## Compliance levels
+
+| Level | Description | Requires |
+|-------|-------------|----------|
+| 1 | Unsigned: hash and core fingerprint | Nothing |
+| 2 | Signed: adds Ed25519 signature over core and full manifest | `--private-key` on generate; `--public-key` on verify |
+| 3 | Anchored: adds RFC 3161 timestamp | Anchor API key |
+
+---
+
+## Generating a keypair
+
+Run `aioschema keygen` once. It prints three values:
+
+```
+creator_id:  ed25519-fp-<32 hex chars>
+public_key:  <base64, 32 bytes>
+private_key: <base64, 32 bytes>
+```
+
+Store `private_key` securely (environment variable, secrets manager, or encrypted file; never commit to version control). Use `creator_id` as your identity across all manifests. Pass `private_key` to `--private-key` when generating Level 2 manifests and `public_key` to `--public-key` when verifying them.
+
+---
+
 ## Extension fields
-Use `--ext key=value` to add metadata to the manifest's `extensions` block. The flag is repeatable — pass it once per field:
+
+Use `--ext key=value` to add metadata to the manifest's `extensions` block. The flag is repeatable; pass it once per field:
+
 ```bash
 aioschema generate article.md \
-  --creator-id ed25519-fp-ebc64203390ddefc442ade9038e1ae18 \
+  --private-key <base64> \
   --ext asset_name=article.md \
   --ext asset_type=document \
   --ext description="LinkedIn article: Understanding Digital Provenance"
 ```
+
 Extension fields are informational and do not affect Core Block integrity or Level 1 verification.
+
 ---
-## Creator ID
-The `--creator-id` flag is optional but important.
-**Without it:** a new unique ID is auto-generated every time you run `generate`. Each file gets a different creator ID — there is no link between them. This is fine for one-off provenance but means you cannot prove that two files came from the same author.
-**With it:** every manifest you generate carries the same identity. Anyone verifying your files can confirm they all came from the same creator. This is the recommended approach for anyone publishing content, releasing software, or establishing a consistent authorship record.
-Your creator ID is derived from your Ed25519 public key and has the format:
-```
-ed25519-fp-<64 hex characters>
-```
-Generate it once, store it safely, and use it for all your files. See the [implementation docs](../implementations/API.md) for how to generate a keypair and derive your creator ID.
----
+
 ## Library
-For programmatic use, see [@aioschema/js](../implementations/js/README.md).
+
+For programmatic use, see [@aioschema/js](../../implementations/js/README.md).
+
 ---
+
 ## License
-Apache 2.0. See [LICENSE.md](./LICENSE.md).  
-Specification: CC-BY 4.0 — [aioschema.org](https://aioschema.org)
+
+Apache 2.0. See [LICENSE.md](./LICENSE.md).
+Specification: CC-BY 4.0, [aioschema.org](https://aioschema.org)
+
+<!-- end aioschema/cli v0.5.13 | AIOSchema spec v0.5.6 | https://aioschema.org -->

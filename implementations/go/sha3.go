@@ -1,7 +1,8 @@
-// sha3.go — SHA3-256 (Keccak-f[1600]) implementation for AIOSchema.
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
 //
-// Pure Go. Zero external dependencies. Implements FIPS 202 SHA3-256.
-// This replaces the golang.org/x/crypto/sha3 dependency entirely.
+// aioschema/go v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
 
 package aioschema
 
@@ -121,3 +122,4 @@ func sha3_256Sum(data []byte) [32]byte {
 	}
 	return out
 }
+// -- end aioschema/go v0.5.6 | AIOSchema spec v0.5.6 --

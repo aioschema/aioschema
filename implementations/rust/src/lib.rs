@@ -1,17 +1,8 @@
-//! AIOSchema v0.5.5 — Rust reference implementation.
-//!
-//! # Quick start
-//!
-//! ```rust,no_run
-//! use aioschema::{verify_manifest, Manifest, VerifyOptions};
-//!
-//! let asset_data = std::fs::read("asset.jpg").unwrap();
-//! let manifest: Manifest =
-//!     serde_json::from_str(&std::fs::read_to_string("asset.jpg.aios.json").unwrap()).unwrap();
-//!
-//! let result = verify_manifest(&asset_data, &manifest, &VerifyOptions::default()).unwrap();
-//! assert!(result.success);
-//! ```
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/rust v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
 
 pub mod algorithms;
 pub mod types;
@@ -24,7 +15,7 @@ pub use types::{
     // Constants
     CORE_HASH_FIELDS, DEFAULT_HASH_ALG, SIDECAR_SUFFIX,
     SOFT_BINDING_THRESHOLD_DEFAULT, SOFT_BINDING_THRESHOLD_MAX,
-    SPEC_VERSION, SUPPORTED_VERSIONS,
+    SPEC_VERSION, SUPPORTED_VERSIONS, MAX_EXTENSION_SIZE_BYTES,
 };
 pub use verify::verify_manifest;
 
@@ -47,3 +38,4 @@ pub use algorithms::{
     TIMESTAMP_PATTERN,
     UUID_PATTERN,
 };
+// -- end aioschema/rust v0.5.6 | AIOSchema spec v0.5.6 --

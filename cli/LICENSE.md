@@ -1,10 +1,14 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright 2026 Ovidiu Ancuta -->
+<!-- aioschema/cli v0.5.13 | AIOSchema spec v0.5.6 | https://aioschema.org -->
+
 # License
 
 ---
 
 ## AIOSchema Specification
 
-The AIOSchema v0.5.5 Specification is published under the **Creative Commons Attribution 4.0 International (CC-BY 4.0)** license.
+The AIOSchema v0.5.6 Specification is published under the **Creative Commons Attribution 4.0 International (CC-BY 4.0)** license.
 
 You are free to implement the specification in any language, for any purpose, including commercial use, provided you include attribution to AIOSchema.
 
@@ -39,3 +43,5 @@ limitations under the License.
 
 AIOSchema is authored and maintained by Ovidiu Ancuta.  
 Website: https://aioschema.org  
+
+<!-- end aioschema/cli v0.5.13 | AIOSchema spec v0.5.6 | https://aioschema.org -->

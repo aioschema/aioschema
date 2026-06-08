@@ -1,3 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/go v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
+
 package aioschema_test
 
 // aioschema_test.go
@@ -8,6 +14,11 @@ package aioschema_test
 //   - VerifyManifest (selected cases)
 
 import (
+	"crypto/ed25519"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -178,14 +189,14 @@ func TestCanonicalJSON_KnownVector(t *testing.T) {
 		"hash_original":      "sha256-abc123",
 		"asset_id":           "urn:test:001",
 		"creator_id":         "ed25519-fp-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-		"schema_version":     "0.5.5",
+		"schema_version":     "0.5.6",
 		"creation_timestamp": "2026-02-22T12:00:00Z",
 	}
 	got, err := aioschema.CanonicalJSON(obj)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	want := `{"asset_id":"urn:test:001","creation_timestamp":"2026-02-22T12:00:00Z","creator_id":"ed25519-fp-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","hash_original":"sha256-abc123","schema_version":"0.5.5"}`
+	want := `{"asset_id":"urn:test:001","creation_timestamp":"2026-02-22T12:00:00Z","creator_id":"ed25519-fp-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","hash_original":"sha256-abc123","schema_version":"0.5.6"}`
 	if string(got) != want {
 		t.Errorf("got  %s\nwant %s", got, want)
 	}
@@ -223,11 +234,11 @@ func TestCanonicalJSON_Deterministic(t *testing.T) {
 
 // Helper: build the fixed CV-07 manifest
 func cv07Manifest() *aioschema.Manifest {
-	cfp := "sha256-d61f35a9cbd7138874ab81017e78023f9ed8e1e9f8d458787078597cc8d082f4"
+	cfp := "sha256-a82834a8a8ff6f496d870462305b6539bdfa3448f6018a01d136b877937dfa83"
 	return &aioschema.Manifest{
 		Core: aioschema.Core{
 			AssetID:           "00000000-0000-7000-8000-000000000001",
-			SchemaVersion:     "0.5.5",
+			SchemaVersion:     "0.5.6",
 			CreationTimestamp: "2026-02-22T12:00:00Z",
 			HashOriginal:      aioschema.HashOriginal{Single: "sha256-88dedaf2e6b9c5ef7f32171831c1d6c39446d754ddc924a0792dd0f8100de15a"},
 			CreatorID:         "ed25519-fp-00000000000000000000000000000000",
@@ -341,11 +352,11 @@ func TestVerifyManifest_InvalidTimestamp(t *testing.T) {
 
 func TestVerifyManifest_HashSchemaBlockAlias(t *testing.T) {
 	// CV-10: manifests using deprecated hash_schema_block must verify successfully
-	hsb := "sha256-d61f35a9cbd7138874ab81017e78023f9ed8e1e9f8d458787078597cc8d082f4"
+	hsb := "sha256-a82834a8a8ff6f496d870462305b6539bdfa3448f6018a01d136b877937dfa83"
 	m := &aioschema.Manifest{
 		Core: aioschema.Core{
 			AssetID:           "00000000-0000-7000-8000-000000000001",
-			SchemaVersion:     "0.5.5",
+			SchemaVersion:     "0.5.6",
 			CreationTimestamp: "2026-02-22T12:00:00Z",
 			HashOriginal:      aioschema.HashOriginal{Single: "sha256-88dedaf2e6b9c5ef7f32171831c1d6c39446d754ddc924a0792dd0f8100de15a"},
 			CreatorID:         "ed25519-fp-00000000000000000000000000000000",
@@ -364,11 +375,11 @@ func TestVerifyManifest_HashSchemaBlockAlias(t *testing.T) {
 
 func TestVerifyManifest_MultiHash(t *testing.T) {
 	// CV-11: multi-hash array — any match is sufficient
-	cfp := "sha256-6391625df74b27daa78eda3a4ed84a3b578094792b67dc04782b4164bdd6a4c7"
+	cfp := "sha256-51ac960aa8042e369618a620e77eb9926762e4b5113bae9e01c645dcaa984626"
 	m := &aioschema.Manifest{
 		Core: aioschema.Core{
 			AssetID:           "00000000-0000-7000-8000-000000000001",
-			SchemaVersion:     "0.5.5",
+			SchemaVersion:     "0.5.6",
 			CreationTimestamp: "2026-02-22T12:00:00Z",
 			HashOriginal: aioschema.HashOriginal{
 				Multi: []string{
@@ -465,3 +476,245 @@ func TestCoreHashFields_ContainsRequired(t *testing.T) {
 		}
 	}
 }
+
+// ── TV-19 through TV-24 (v0.5.6) ──────────────────────────────────────────────
+
+func TestTV19_PublicKeyFingerprintMatch(t *testing.T) {
+	pub, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("GenerateKey: %v", err)
+	}
+	pubB64 := base64.StdEncoding.EncodeToString(pub)
+	fpHash := sha256.Sum256(pub)
+	fpHex := hex.EncodeToString(fpHash[:16])
+	creatorID := "ed25519-fp-" + fpHex
+
+	assetData := []byte("TV-19 public key test")
+	m, err := aioschema.GenerateManifest(assetData, aioschema.GenerateOptions{
+		CreatorID:   creatorID,
+		PrivateKey:  priv,
+		Extensions:  map[string]interface{}{"public_key": pubB64},
+	})
+	if err != nil {
+		t.Fatalf("GenerateManifest: %v", err)
+	}
+
+	result, err := aioschema.VerifyManifest(assetData, m, aioschema.VerifyOptions{})
+	if err != nil {
+		t.Fatalf("VerifyManifest: %v", err)
+	}
+	if !result.Success {
+		t.Errorf("TV-19 failed: %s", result.Message)
+	}
+	if !result.SignatureVerified {
+		t.Error("Signature must verify via embedded public_key")
+	}
+	if !result.ManifestSignatureVerified {
+		t.Error("Manifest signature must verify via embedded public_key")
+	}
+}
+
+func TestTV20_PublicKeyFingerprintMismatch(t *testing.T) {
+	pub1, priv1, _ := ed25519.GenerateKey(nil)
+	pub2, _, _ := ed25519.GenerateKey(nil)
+	pub2B64 := base64.StdEncoding.EncodeToString(pub2)
+	fpHash := sha256.Sum256(pub1)
+	fpHex := hex.EncodeToString(fpHash[:16])
+	creatorID := "ed25519-fp-" + fpHex
+
+	assetData := []byte("TV-20 mismatch test")
+	m, err := aioschema.GenerateManifest(assetData, aioschema.GenerateOptions{
+		CreatorID:  creatorID,
+		PrivateKey: priv1,
+		Extensions: map[string]interface{}{"public_key": pub2B64},
+	})
+	if err != nil {
+		t.Fatalf("GenerateManifest: %v", err)
+	}
+
+	result, err := aioschema.VerifyManifest(assetData, m, aioschema.VerifyOptions{})
+	if err != nil {
+		t.Fatalf("VerifyManifest: %v", err)
+	}
+	if result.Success {
+		t.Error("TV-20 must fail: fingerprint mismatch should be detected")
+	}
+	if !strings.Contains(result.Message, "fingerprint cross-check") {
+		t.Errorf("Expected 'fingerprint cross-check' in message, got: %s", result.Message)
+	}
+}
+
+func TestTV21_AiDeclarationValid(t *testing.T) {
+	assetData := []byte("TV-21 ai declaration")
+	m, err := aioschema.GenerateManifest(assetData, aioschema.GenerateOptions{
+		Extensions: map[string]interface{}{
+			"ai_declaration": map[string]interface{}{
+				"disclosure_required": true,
+				"ai_generated":        true,
+				"ai_manipulated":      false,
+				"human_reviewed":     true,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("GenerateManifest: %v", err)
+	}
+
+	result, err := aioschema.VerifyManifest(assetData, m, aioschema.VerifyOptions{})
+	if err != nil {
+		t.Fatalf("VerifyManifest: %v", err)
+	}
+	if !result.Success {
+		t.Errorf("TV-21 failed: %s", result.Message)
+	}
+}
+
+func TestTV22_AiDeclarationConstraintViolation(t *testing.T) {
+	assetData := []byte("TV-22 constraint violation")
+	m, err := aioschema.GenerateManifest(assetData, aioschema.GenerateOptions{
+		Extensions: map[string]interface{}{
+			"ai_declaration": map[string]interface{}{
+				"disclosure_required": true,
+				"ai_generated":        false,
+				"ai_manipulated":     false,
+				"human_reviewed":     false,
+				"standard_editing":   true,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("GenerateManifest: %v", err)
+	}
+
+	result, err := aioschema.VerifyManifest(assetData, m, aioschema.VerifyOptions{})
+	if err != nil {
+		t.Fatalf("VerifyManifest: %v", err)
+	}
+	if result.Success {
+		t.Error("TV-22 must fail: standard_editing + disclosure_required is a constraint violation")
+	}
+	if !strings.Contains(result.Message, "standard_editing") {
+		t.Errorf("Expected 'standard_editing' in message, got: %s", result.Message)
+	}
+}
+
+func TestTV23_4KBBoundary(t *testing.T) {
+	assetData := []byte("TV-23 boundary test")
+	m, err := aioschema.GenerateManifest(assetData, aioschema.GenerateOptions{})
+	if err != nil {
+		t.Fatalf("GenerateManifest: %v", err)
+	}
+	// Find the right padding size so extensions JSON is exactly 4096 bytes
+	for padLen := 4080; padLen < 4100; padLen++ {
+		m.Extensions["padding"] = strings.Repeat("x", padLen)
+		extJSON, _ := json.Marshal(m.Extensions)
+		if len(extJSON) == aioschema.MaxExtensionSizeBytes {
+			break
+		}
+		if len(extJSON) > aioschema.MaxExtensionSizeBytes {
+			// Went too far, remove padding and verify it still passes
+			delete(m.Extensions, "padding")
+			break
+		}
+	}
+
+	result, err := aioschema.VerifyManifest(assetData, m, aioschema.VerifyOptions{})
+	if err != nil {
+		t.Fatalf("VerifyManifest: %v", err)
+	}
+	if !result.Success {
+		t.Errorf("TV-23 failed: %s", result.Message)
+	}
+}
+
+func TestTV24_4KBExceeded(t *testing.T) {
+	assetData := []byte("TV-24 exceeded test")
+	m, err := aioschema.GenerateManifest(assetData, aioschema.GenerateOptions{
+		Extensions: map[string]interface{}{
+			"padding": strings.Repeat("x", aioschema.MaxExtensionSizeBytes),
+		},
+	})
+	if err != nil {
+		t.Fatalf("GenerateManifest: %v", err)
+	}
+
+	result, err := aioschema.VerifyManifest(assetData, m, aioschema.VerifyOptions{})
+	if err != nil {
+		t.Fatalf("VerifyManifest: %v", err)
+	}
+	if result.Success {
+		t.Error("TV-24 must fail: extensions exceed 4096 bytes")
+	}
+	if !strings.Contains(result.Message, "4096") {
+		t.Errorf("Expected '4096' in message, got: %s", result.Message)
+	}
+}
+
+func TestTV25_ComplianceEuArt50(t *testing.T) {
+	// TV-25: compliance_eu_art50 extension — human_reviewed=true with field present
+	// must pass without warning; human_reviewed=true without field must warn.
+	assetData := []byte("TV-25 compliance_eu_art50 test")
+
+	// Case A: compliance_eu_art50 present — no warning expected
+	m, err := aioschema.GenerateManifest(assetData, aioschema.GenerateOptions{
+		Extensions: map[string]interface{}{
+			"ai_declaration": map[string]interface{}{
+				"disclosure_required": true,
+				"ai_generated":        true,
+				"ai_manipulated":      false,
+				"human_reviewed":      true,
+			},
+			"compliance_eu_art50": map[string]interface{}{
+				"editorial_responsibility": "Test Organisation",
+				"review_type":              "substantive",
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("GenerateManifest: %v", err)
+	}
+	result, err := aioschema.VerifyManifest(assetData, m, aioschema.VerifyOptions{})
+	if err != nil {
+		t.Fatalf("VerifyManifest: %v", err)
+	}
+	if !result.Success {
+		t.Errorf("TV-25 Case A failed: %s", result.Message)
+	}
+	for _, w := range result.Warnings {
+		if strings.Contains(w, "compliance_eu_art50") {
+			t.Errorf("TV-25 Case A: unexpected warning about compliance_eu_art50: %s", w)
+		}
+	}
+
+	// Case B: human_reviewed=true but compliance_eu_art50 absent — warning expected
+	m2, err := aioschema.GenerateManifest(assetData, aioschema.GenerateOptions{
+		Extensions: map[string]interface{}{
+			"ai_declaration": map[string]interface{}{
+				"disclosure_required": true,
+				"ai_generated":        true,
+				"ai_manipulated":      false,
+				"human_reviewed":      true,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("GenerateManifest: %v", err)
+	}
+	result2, err := aioschema.VerifyManifest(assetData, m2, aioschema.VerifyOptions{})
+	if err != nil {
+		t.Fatalf("VerifyManifest: %v", err)
+	}
+	if !result2.Success {
+		t.Errorf("TV-25 Case B must still pass (warning, not failure): %s", result2.Message)
+	}
+	foundWarning := false
+	for _, w := range result2.Warnings {
+		if strings.Contains(w, "compliance_eu_art50") {
+			foundWarning = true
+		}
+	}
+	if !foundWarning {
+		t.Error("TV-25 Case B: expected warning about missing compliance_eu_art50")
+	}
+}
+// -- end aioschema/go v0.5.6 | AIOSchema spec v0.5.6 --

@@ -1,6 +1,12 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+<!-- Copyright 2026 Ovidiu Ancuta -->
+<!--
+     conformance/ README | AIOSchema spec v0.5.6
+     https://aioschema.org
+-->
 # AIOSchema Conformance Vectors
 
-`cross_verify_vectors.json` contains 14 deterministic cross-implementation test vectors (CV-01 through CV-14). Any conforming AIOSchema implementation must produce byte-identical results for all 14 vectors.
+`cross_verify_vectors.json` contains 18 deterministic cross-implementation test vectors (CV-01 through CV-18). Any conforming AIOSchema v0.5.6 implementation must produce byte-identical results for all 18 vectors.
 
 ---
 
@@ -10,21 +16,21 @@
 ```bash
 cd implementations/python
 python cross_verify_python.py
-# Expected: 14/14 PASS ✓ ALL PASS
+# Expected: 18/18 PASS ✓ ALL PASS
 ```
 
 **TypeScript**
 ```bash
 cd implementations/typescript
 npx ts-node cross_verify_ts.ts
-# Expected: 14/14 PASS ✓ ALL PASS
+# Expected: 18/18 PASS ✓ ALL PASS
 ```
 
 **Node.js**
 ```bash
 cd implementations/js
 node cross_verify_node.js
-# Expected: 14/14 PASS ✓ ALL PASS
+# Expected: 18/18 PASS ✓ ALL PASS
 ```
 
 **Go**
@@ -38,7 +44,13 @@ go test ./... -run CrossVerify
 ```bash
 cd implementations/rust
 cargo test cross_verify
-# Expected: test result: ok. 14 passed
+# Expected: test result: ok. 18 passed
+```
+**C#/.NET**
+```bash
+cd implementations/dotnet
+dotnet test --filter "CrossVerify"
+# Expected: 18/18 PASS
 ```
 
 ---
@@ -58,11 +70,11 @@ Each vector in `cross_verify_vectors.json` has one of two shapes:
 }
 ```
 
-**Verification vectors (CV-07 through CV-14)**
+**Verification vectors (CV-07 through CV-18)**
 ```json
 {
   "id": "CV-07",
-  "name": "Valid manifest — hard match",
+  "name": "Valid manifest - hard match",
   "type": "verify",
   "inputs": { "asset_bytes_hex": "...", "manifest": { ... } },
   "expected": { "success": true, "match_type": "hard" }
@@ -76,6 +88,8 @@ Each vector in `cross_verify_vectors.json` has one of two shapes:
 When a new spec version introduces deterministic behavior changes:
 
 1. Add the vector to `cross_verify_vectors.json` with the next CV number
-2. Update all five implementation runners to handle it
+2. Update all six implementation runners to handle it
 3. Update `CONFORMANCE_VECTORS.md` in the repo root
 4. All implementations must pass before the vector is considered normative
+
+<!-- end conformance/ README | AIOSchema spec v0.5.6 -->

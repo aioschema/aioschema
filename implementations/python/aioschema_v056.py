@@ -1,32 +1,12 @@
-"""
-AIOSchema v0.5 — Reference Implementation
-==========================================
-Spec: https://aioschema.org  (Public Review Draft v0.5)
-
-New in v0.5.1 vs v0.5:
-  §5.1  previous_version_anchor — optional field linking successive spec/asset versions
-  §14   Governance model updated — founder-controlled pre-governance phase
-  §18   Founding Provenance — self-anchoring procedure for the specification itself
-
-New in v0.5 vs v0.4:
-  §5.5  hash_original may be a single string OR an array of prefixed hashes
-  §5.8  manifest_signature — detached Ed25519 over canonical manifest bytes
-  §5.3  SHA-384 added to hash algorithm registry
-  §8.3  soft_binding_threshold is now a verifier-configurable parameter
-  §9.2  anchor_resolver contract formally defined
-  §5.2  Level 3 (Anchor-Verified) conformance tier
-  §10   Updated 14-step verification procedure
-
-Deferred (not in this implementation):
-  DID creator_id mode, creator_keyref, UUID v8, extensions_version.
-  These require additional design work before they can be added without
-  compromising the lightweight architecture.
-
-Dependencies: cryptography, Pillow, numpy
-"""
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Ovidiu Ancuta
+#
+# aioschema/python v0.5.6 | AIOSchema spec v0.5.6
+# https://aioschema.org
 
 from __future__ import annotations
 
+import base64
 import copy
 import hashlib
 import hmac
@@ -55,10 +35,10 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import (
 # Spec constants
 # ---------------------------------------------------------------------------
 
-SPEC_VERSION = "0.5.5"
+SPEC_VERSION = "0.5.6"
 
 SUPPORTED_VERSIONS: frozenset[str] = frozenset(
-    {"0.1", "0.2", "0.3", "0.3.1", "0.4", "0.5", "0.5.1", "0.5.5"}
+    {"0.1", "0.2", "0.3", "0.3.1", "0.4", "0.5", "0.5.1", "0.5.5", "0.5.6"}
 )
 
 # Hash algorithm registry — token → (hashlib name, exact hex digest length)
@@ -93,6 +73,7 @@ CORE_HASH_FIELDS: tuple[str, ...] = (
 # Soft-binding defaults (§8.3)
 SOFT_BINDING_THRESHOLD_DEFAULT = 5
 SOFT_BINDING_THRESHOLD_MAX     = 10
+MAX_EXTENSION_SIZE_BYTES       = 4096   # §6.3
 
 # Sidecar naming (§8.2)
 SIDECAR_SUFFIX = ".aios.json"
@@ -290,7 +271,7 @@ class AnchorVerificationError(Exception):
 
 # ── RFC 3161 Trusted Timestamp Authority Support ──────────────────────────────
 
-def _rfc3161_submit(hash_hex: str, tsa_url: str = "https://freetsa.org/tsr") -> bytes:
+def _rfc3161_submit(hash_hex: str, tsa_url: str = "https://rfc3161.ai.moda") -> bytes:
     """
     Submit a hash to an RFC 3161 Time Stamp Authority.
     Returns the raw TimeStampResponse bytes (.tsr file content).
@@ -379,14 +360,14 @@ def _rfc3161_verify(tsr_bytes: bytes, hash_hex: str) -> dict:
 
 def anchor_rfc3161(
     core_fingerprint: str,
-    tsa_url: str = "https://freetsa.org/tsr",
+    tsa_url: str = "https://rfc3161.ai.moda",
     out_path: str | None = None
 ) -> dict:
     """
     Anchor a core_fingerprint using RFC 3161 trusted timestamping.
 
     core_fingerprint: the manifest's core_fingerprint value (e.g. "sha256-abc123...")
-    tsa_url:          RFC 3161 TSA endpoint (default: FreeTSA.org)
+    tsa_url:          RFC 3161 TSA endpoint (default: ai.moda)
     out_path:         if provided, save the .tsr file here
 
     Returns:
@@ -787,6 +768,61 @@ def verify_manifest(
     core = manifest.core
     ext  = manifest.extensions
 
+    # §6.3 — Extension size limit
+    if ext:
+        ext_size = len(json.dumps(ext, separators=(",", ":")))
+        if ext_size > MAX_EXTENSION_SIZE_BYTES:
+            return VerificationResult(
+                False,
+                f"Extensions size ({ext_size} bytes) exceeds limit of "
+                f"{MAX_EXTENSION_SIZE_BYTES} bytes (§6.3)",
+            )
+
+    # §11.1 — ai_declaration constraint validation
+    ai_decl = ext.get("ai_declaration")
+    if isinstance(ai_decl, dict):
+        if ai_decl.get("standard_editing") is True and ai_decl.get("disclosure_required") is True:
+            return VerificationResult(
+                False,
+                "ai_declaration constraint violation: standard_editing is true but "
+                "disclosure_required is also true. Per Article 50.2, standard editing "
+                "does not trigger AI disclosure obligations.",
+            )
+        if ai_decl.get("human_reviewed") is True and "compliance_eu_art50" not in ext:
+            warns.append(
+                "ai_declaration.human_reviewed is true but compliance_eu_art50 "
+                "extension is absent (SHOULD be present per §11.1)"
+            )
+
+    # §11.3 — public_key fingerprint cross-check
+    embedded_pubkey: Ed25519PublicKey | None = None
+    pk_b64 = ext.get("public_key")
+    if isinstance(pk_b64, str):
+        try:
+            pk_bytes = base64.b64decode(pk_b64)
+            if len(pk_bytes) != 32:
+                return VerificationResult(
+                    False,
+                    f"extensions.public_key decoded to {len(pk_bytes)} bytes, "
+                    "expected 32 (Ed25519)",
+                )
+            # Fingerprint cross-check: SHA-256(pubkey)[:32 hex] must match creator_id
+            fp_hex = hashlib.sha256(pk_bytes).hexdigest()[:32]
+            expected_creator_id = f"ed25519-fp-{fp_hex}"
+            if not _safe_equal(core.get("creator_id", ""), expected_creator_id):
+                return VerificationResult(
+                    False,
+                    "extensions.public_key fingerprint cross-check failed: "
+                    "embedded key does not belong to declared creator_id. "
+                    f"Expected ed25519-fp derived from key: {expected_creator_id}, "
+                    f"manifest creator_id: {core.get('creator_id', '')}",
+                )
+            # Derive Ed25519PublicKey for signature verification
+            from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey as _EdPK
+            embedded_pubkey = _EdPK.from_public_bytes(pk_bytes)
+        except Exception as exc:
+            return VerificationResult(False, f"extensions.public_key is invalid: {exc}")
+
     # Clamp threshold to policy maximum
     soft_binding_threshold = min(
         max(0, soft_binding_threshold), SOFT_BINDING_THRESHOLD_MAX
@@ -934,14 +970,17 @@ def verify_manifest(
                 f"signature has invalid format. Expected ed25519-<128hex>.",
                 match_type=match_type,
             )
-        if public_key is None:
+        # §11.3: prefer embedded public_key if no external key provided
+        verify_key = public_key or embedded_pubkey
+        if verify_key is None:
             return VerificationResult(
                 False,
-                "Manifest is signed but no public_key was provided.",
+                "Manifest is signed but no public key was provided "
+                "(neither externally nor via extensions.public_key).",
                 match_type=match_type,
             )
         try:
-            public_key.verify(bytes.fromhex(sig_str[len("ed25519-"):]), canonical_core)
+            verify_key.verify(bytes.fromhex(sig_str[len("ed25519-"):]), canonical_core)
             signature_verified = True
         except InvalidSignature:
             return VerificationResult(
@@ -961,15 +1000,17 @@ def verify_manifest(
                 "manifest_signature has invalid format. Expected ed25519-<128hex>.",
                 match_type=match_type,
             )
-        if public_key is None:
+        verify_key = public_key or embedded_pubkey
+        if verify_key is None:
             return VerificationResult(
                 False,
-                "manifest_signature present but no public_key was provided.",
+                "manifest_signature present but no public key was provided "
+                "(neither externally nor via extensions.public_key).",
                 match_type=match_type,
             )
         try:
             manifest_bytes = _canonical_manifest_bytes(manifest.to_dict())
-            public_key.verify(
+            verify_key.verify(
                 bytes.fromhex(msig_str[len("ed25519-"):]), manifest_bytes
             )
             manifest_signature_verified = True
@@ -1083,3 +1124,4 @@ def verify_batch(
         except Exception as exc:
             results[fp] = exc
     return results
+# -- end aioschema/python v0.5.6 | AIOSchema spec v0.5.6 --

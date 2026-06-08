@@ -1,5 +1,5 @@
 {
-  "spec_version": "0.5.5",
+  "spec_version": "0.5.6",
   "vectors": [
     {
       "id": "CV-01",
@@ -48,11 +48,11 @@
           "hash_original": "sha256-abc123",
           "asset_id": "urn:test:001",
           "creator_id": "ed25519-fp-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-          "schema_version": "0.5.5",
+          "schema_version": "0.5.6",
           "creation_timestamp": "2026-02-22T12:00:00Z"
         }
       },
-      "expected": "{\"asset_id\":\"urn:test:001\",\"creation_timestamp\":\"2026-02-22T12:00:00Z\",\"creator_id\":\"ed25519-fp-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"hash_original\":\"sha256-abc123\",\"schema_version\":\"0.5.5\"}"
+      "expected": "{\"asset_id\":\"urn:test:001\",\"creation_timestamp\":\"2026-02-22T12:00:00Z\",\"creator_id\":\"ed25519-fp-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"hash_original\":\"sha256-abc123\",\"schema_version\":\"0.5.6\"}"
     },
     {
       "id": "CV-06",
@@ -61,13 +61,13 @@
       "inputs": {
         "core_fields": {
           "asset_id": "urn:test:001",
-          "schema_version": "0.5.5",
+          "schema_version": "0.5.6",
           "creation_timestamp": "2026-02-22T12:00:00Z",
           "hash_original": "sha256-abc123",
           "creator_id": "ed25519-fp-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         }
       },
-      "expected": "sha256-9a3b7c8581d2d6f3b325dd4d13a4f8dd1d11575437894d5b2cfd21dbae5b5ce9"
+      "expected": "sha256-78427c13b6196911133dd82bebdea8591ceb3ca2459d1943dfc5e4c2a72c3231"
     },
     {
       "id": "CV-07",
@@ -299,6 +299,136 @@
       },
       "python_result": {
         "success": false
+      }
+    },
+    {
+      "id": "CV-15",
+      "name": "extensions.public_key fingerprint matches creator_id",
+      "description": "When extensions.public_key is present, SHA-256(key_bytes)[:16 hex] must match creator_id fingerprint suffix",
+      "inputs": {
+        "asset_hex": "41494f536368656d6120746573742061737365742076302e352e36202d2063616e6f6e6963616c207265666572656e636520636f6e74656e7420666f7220636f6e666f726d616e63652074657374696e672e",
+        "public_key_b64": "Fi00S1HLbSi+eXOLuFDByIBNW9vOBbTZ3nsYbISeBlY=",
+        "manifest": {
+          "core": {
+            "asset_id": "019c7cb0-6e40-7f21-873b-9a9cf13e461b",
+            "schema_version": "0.5.6",
+            "creation_timestamp": "2026-05-10T12:00:00Z",
+            "hash_original": "sha256-45880b5668c1271d3546dc2f8ec4d8bed1fbf9deb986b76da73b1ea459a6d492",
+            "creator_id": "ed25519-fp-ebc64203390ddefc442ade9038e1ae18",
+            "core_fingerprint": "sha256-110582f44b47ff1258969484b4213566c680bd812c5b953e0b350e573412942a",
+            "signature": "ed25519-3bd40ead55a2820d6cc704bd191a0038748db4480ff752e418d996e0fccfc1811effd253e166c513025576f76aff173af819f5c73f80f77fa1a30915679b900d",
+            "manifest_signature": "ed25519-87c0303bc5865c61809bf6b2f4ddea24d73c68105f2f754d660573b6c2672fb0a4c26899b440cd5f0028dcb173526d67baa5fc293806462e6f5d5b3120252307",
+            "anchor_reference": null,
+            "previous_version_anchor": null
+          },
+          "extensions": {
+            "public_key": "Fi00S1HLbSi+eXOLuFDByIBNW9vOBbTZ3nsYbISeBlY="
+          }
+        }
+      },
+      "expected": {
+        "success": true,
+        "public_key_fingerprint_match": true
+      }
+    },
+    {
+      "id": "CV-16",
+      "name": "extensions.public_key fingerprint does not match creator_id",
+      "description": "When extensions.public_key fingerprint does not match creator_id, verification must fail",
+      "inputs": {
+        "asset_hex": "41494f536368656d6120746573742061737365742076302e352e36202d2063616e6f6e6963616c207265666572656e636520636f6e74656e7420666f7220636f6e666f726d616e63652074657374696e672e",
+        "public_key_b64": null,
+        "manifest": {
+          "core": {
+            "asset_id": "019c7cb0-6e40-7f21-873b-9a9cf13e461b",
+            "schema_version": "0.5.6",
+            "creation_timestamp": "2026-05-10T12:00:00Z",
+            "hash_original": "sha256-45880b5668c1271d3546dc2f8ec4d8bed1fbf9deb986b76da73b1ea459a6d492",
+            "creator_id": "ed25519-fp-ebc64203390ddefc442ade9038e1ae18",
+            "core_fingerprint": "sha256-110582f44b47ff1258969484b4213566c680bd812c5b953e0b350e573412942a",
+            "signature": "ed25519-3bd40ead55a2820d6cc704bd191a0038748db4480ff752e418d996e0fccfc1811effd253e166c513025576f76aff173af819f5c73f80f77fa1a30915679b900d",
+            "manifest_signature": "ed25519-adf2cdd03d7b7c6c0cd7d2dede63d14951d97b8d9bd0bcff4aacc2ad4a93bb90c34c40a28c4c09fad398a6eea1ae549f4bd397aaa99fafb54bea4acc5c236703",
+            "anchor_reference": null,
+            "previous_version_anchor": null
+          },
+          "extensions": {
+            "public_key": "BV4rdH6q0nWibBuCoOGNw058dPkv/IAPmPW1YK4pMOs="
+          }
+        }
+      },
+      "expected": {
+        "success": false
+      }
+    },
+    {
+      "id": "CV-17",
+      "name": "ai_declaration standard_editing constraint violation",
+      "description": "standard_editing=true with disclosure_required=true violates the \u00a711.1 constraint and must fail",
+      "inputs": {
+        "asset_hex": "41494f536368656d6120746573742061737365742076302e352e36202d2063616e6f6e6963616c207265666572656e636520636f6e74656e7420666f7220636f6e666f726d616e63652074657374696e672e",
+        "public_key_b64": null,
+        "manifest": {
+          "core": {
+            "asset_id": "019c7cb0-6e40-7f21-873b-9a9cf13e461c",
+            "schema_version": "0.5.6",
+            "creation_timestamp": "2026-05-10T12:00:00Z",
+            "hash_original": "sha256-45880b5668c1271d3546dc2f8ec4d8bed1fbf9deb986b76da73b1ea459a6d492",
+            "creator_id": "019c7cb0-7f56-7000-8000-000000000003",
+            "core_fingerprint": "sha256-74a31ff93bc5cb009270bc99e10bb144c56c203e7b11ef724534eca286f1ae61",
+            "signature": null,
+            "manifest_signature": null,
+            "anchor_reference": null,
+            "previous_version_anchor": null
+          },
+          "extensions": {
+            "ai_declaration": {
+              "disclosure_required": true,
+              "ai_generated": false,
+              "ai_manipulated": false,
+              "human_reviewed": false,
+              "standard_editing": true
+            }
+          }
+        }
+      },
+      "expected": {
+        "success": false
+      }
+    },
+    {
+      "id": "CV-18",
+      "name": "Extensions serialized size at 4096-byte boundary",
+      "description": "Extensions object serialized to exactly 4096 bytes must pass (\u00a76.3 limit is inclusive)",
+      "inputs": {
+        "asset_hex": "41494f536368656d6120746573742061737365742076302e352e36202d2063616e6f6e6963616c207265666572656e636520636f6e74656e7420666f7220636f6e666f726d616e63652074657374696e672e",
+        "public_key_b64": null,
+        "manifest": {
+          "core": {
+            "asset_id": "019c7cb0-6e40-7f21-873b-9a9cf13e461d",
+            "schema_version": "0.5.6",
+            "creation_timestamp": "2026-05-10T12:00:00Z",
+            "hash_original": "sha256-45880b5668c1271d3546dc2f8ec4d8bed1fbf9deb986b76da73b1ea459a6d492",
+            "creator_id": "019c7cb0-7f56-7000-8000-000000000004",
+            "core_fingerprint": "sha256-2eb873c84a616911844472236e8bdee4a4aa8eef056cd9e4ff93b703a8d5f92b",
+            "signature": null,
+            "manifest_signature": null,
+            "anchor_reference": null,
+            "previous_version_anchor": null
+          },
+          "extensions": {
+            "ai_declaration": {
+              "disclosure_required": true,
+              "ai_generated": true,
+              "ai_manipulated": false,
+              "human_reviewed": true,
+              "standard_editing": false,
+              "large_field": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            }
+          }
+        }
+      },
+      "expected": {
+        "success": true
       }
     }
   ]

@@ -1,17 +1,20 @@
-/**
- * AIOSchema v0.5.5 — TypeScript Test Suite
- * Block 4 gate: all test vectors pass, cross-implementation verified.
- */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/typescript v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
 
 import * as assert from "assert";
+import * as nodeCrypto from "crypto";
 import {
   SPEC_VERSION, SUPPORTED_VERSIONS, HASH_ALGORITHMS, HASH_REGEX,
   generateManifest, verifyManifest, manifestToJson, manifestFromJson,
   canonicalManifestBytes, computeHash, parseHash, safeEqual,
   canonicalJson, anonymousCreatorId, pHashV1, pHashSimilarity,
   uuidV7, anchorRfc3161, verifyRfc3161, AnchorVerificationError,
-  AIOSchemaError, SOFT_BINDING_THRESHOLD_DEFAULT, SOFT_BINDING_THRESHOLD_MAX
-} from "../index";
+  AIOSchemaError, SOFT_BINDING_THRESHOLD_DEFAULT, SOFT_BINDING_THRESHOLD_MAX,
+  MAX_EXTENSION_SIZE_BYTES, creatorIdFromPublicKey
+} from "./index";
 
 // ── Test harness ──────────────────────────────────────────────────────────────
 
@@ -36,14 +39,14 @@ function skip(name: string) {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const ASSET_A = Buffer.from("AIOSchema test asset A — v0.5.5", "utf8");
+const ASSET_A = Buffer.from("AIOSchema test asset A — v0.5.6", "utf8");
 const ASSET_B = Buffer.from("AIOSchema test asset B — different content", "utf8");
 
 // ── Test groups ───────────────────────────────────────────────────────────────
 
 async function testConstants() {
-  await test("SPEC_VERSION is 0.5.5", () => assert.strictEqual(SPEC_VERSION, "0.5.5"));
-  await test("SUPPORTED_VERSIONS includes 0.5.5", () => assert.ok(SUPPORTED_VERSIONS.has("0.5.5")));
+  await test("SPEC_VERSION is 0.5.6", () => assert.strictEqual(SPEC_VERSION, "0.5.6"));
+  await test("SUPPORTED_VERSIONS includes 0.5.6", () => assert.ok(SUPPORTED_VERSIONS.has("0.5.6")));
   await test("SUPPORTED_VERSIONS includes all prior versions", () => {
     for (const v of ["0.1","0.2","0.3","0.3.1","0.4","0.5","0.5.1"]) {
       assert.ok(SUPPORTED_VERSIONS.has(v), `Missing version ${v}`);
@@ -189,9 +192,9 @@ async function testGenerateManifest() {
     assert.ok(typeof m.core.core_fingerprint === "string");
     assert.ok(typeof m.core.hash_original === "string");
   });
-  await test("generateManifest default schema_version is 0.5.5", () => {
+  await test("generateManifest default schema_version is 0.5.6", () => {
     const m = generateManifest(ASSET_A);
-    assert.strictEqual(m.core.schema_version, "0.5.5");
+    assert.strictEqual(m.core.schema_version, "0.5.6");
   });
   await test("generateManifest core_fingerprint has sha256 prefix", () => {
     const m = generateManifest(ASSET_A);
@@ -501,10 +504,108 @@ async function testCrossImplVectors() {
   });
 }
 
+// ── TV-19 through TV-24 (v0.5.6) ─────────────────────────────────────────────
+
+function privRawFromKey(k: nodeCrypto.KeyObject): Uint8Array {
+  return k.export({ type: "pkcs8", format: "der" }).slice(-32);
+}
+
+async function testV056Vectors() {
+  // TV-19: public_key fingerprint match
+  await test("TV-19: public_key fingerprint match — self-contained verification", async () => {
+    const { publicKey, privateKey } = nodeCrypto.generateKeyPairSync("ed25519");
+    const pubRaw = publicKey.export({ type: "spki", format: "der" }).slice(-32) as Buffer;
+    const pubB64 = pubRaw.toString("base64");
+    const creatorId = creatorIdFromPublicKey(pubRaw);
+    const m = generateManifest(ASSET_A, { creatorId, privateKey: privRawFromKey(privateKey), extensions: { public_key: pubB64 } });
+    const r = await verifyManifest(ASSET_A, m);
+    assert.ok(r.success, `TV-19 failed: ${r.message}`);
+    assert.ok(r.signatureVerified, "signature must verify via embedded public_key");
+    assert.ok(r.manifestSignatureVerified, "manifest signature must verify via embedded public_key");
+  });
+
+  // TV-20: public_key fingerprint mismatch
+  await test("TV-20: public_key fingerprint mismatch — MUST fail", async () => {
+    const { publicKey: pub1, privateKey: priv1 } = nodeCrypto.generateKeyPairSync("ed25519");
+    const { publicKey: pub2 } = nodeCrypto.generateKeyPairSync("ed25519");
+    const pub1Raw = pub1.export({ type: "spki", format: "der" }).slice(-32) as Buffer;
+    const pub2Raw = pub2.export({ type: "spki", format: "der" }).slice(-32) as Buffer;
+    const pub2B64 = pub2Raw.toString("base64");
+    const creatorId = creatorIdFromPublicKey(pub1Raw);
+    const m = generateManifest(ASSET_A, { creatorId, privateKey: privRawFromKey(priv1), extensions: { public_key: pub2B64 } });
+    const r = await verifyManifest(ASSET_A, m);
+    assert.ok(!r.success, "TV-20 must fail");
+    assert.ok(r.message.includes("fingerprint cross-check"), `Expected 'fingerprint cross-check' in: ${r.message}`);
+  });
+
+  // TV-21: ai_declaration valid
+  await test("TV-21: ai_declaration valid — constraint satisfied", async () => {
+    const decl = { disclosure_required: true, ai_generated: true, ai_manipulated: false, human_reviewed: true };
+    const m = generateManifest(ASSET_A, { extensions: { ai_declaration: decl } });
+    const r = await verifyManifest(ASSET_A, m);
+    assert.ok(r.success, `TV-21 failed: ${r.message}`);
+  });
+
+  // TV-22: ai_declaration constraint violation
+  await test("TV-22: ai_declaration constraint violation — MUST fail", async () => {
+    const decl = { disclosure_required: true, ai_generated: false, ai_manipulated: false, human_reviewed: false, standard_editing: true };
+    const m = generateManifest(ASSET_A, { extensions: { ai_declaration: decl } });
+    const r = await verifyManifest(ASSET_A, m);
+    assert.ok(!r.success, "TV-22 must fail");
+    assert.ok(r.message.includes("standard_editing"), `Expected 'standard_editing' in: ${r.message}`);
+  });
+
+  // TV-23: 4KB boundary
+  await test("TV-23: 4KB extension limit at boundary — MUST pass", async () => {
+    const m = generateManifest(ASSET_A);
+    const extJson = JSON.stringify(m.core.schema_version ? m.extensions : {});
+    const currentSize = Buffer.byteLength(JSON.stringify(m.extensions, Object.keys(m.extensions).sort()), "utf-8");
+    const remaining = MAX_EXTENSION_SIZE_BYTES - currentSize;
+    if (remaining > 14) {
+      m.extensions["padding"] = "x".repeat(remaining - 14);
+    }
+    const r = await verifyManifest(ASSET_A, m);
+    assert.ok(r.success, `TV-23 failed: ${r.message}`);
+  });
+
+  // TV-24: 4KB exceeded
+  await test("TV-24: 4KB extension limit exceeded — MUST fail", async () => {
+    const m = generateManifest(ASSET_A, { extensions: { padding: "x".repeat(MAX_EXTENSION_SIZE_BYTES) } });
+    const r = await verifyManifest(ASSET_A, m);
+    assert.ok(!r.success, "TV-24 must fail");
+    assert.ok(r.message.includes("4096"), `Expected '4096' in: ${r.message}`);
+  });
+}
+
+
+async function testTV25() {
+  // TV-25: compliance_eu_art50 — human_reviewed=true with field present must pass
+  // without compliance_eu_art50 warning; absent must warn but not fail.
+
+  await test("TV-25 Case A: compliance_eu_art50 present — no warning expected", async () => {
+    const decl = { disclosure_required: true, ai_generated: true, ai_manipulated: false, human_reviewed: true };
+    const art50 = { editorial_responsibility: "Test Organisation", review_type: "substantive" };
+    const m = generateManifest(ASSET_A, { extensions: { ai_declaration: decl, compliance_eu_art50: art50 } });
+    const r = await verifyManifest(ASSET_A, m);
+    assert.ok(r.success, `TV-25 Case A failed: ${r.message}`);
+    const hasWarn = r.warnings.some(w => w.includes("compliance_eu_art50"));
+    assert.ok(!hasWarn, `TV-25 Case A: unexpected compliance_eu_art50 warning`);
+  });
+
+  await test("TV-25 Case B: compliance_eu_art50 absent — warning expected, not failure", async () => {
+    const decl = { disclosure_required: true, ai_generated: true, ai_manipulated: false, human_reviewed: true };
+    const m = generateManifest(ASSET_A, { extensions: { ai_declaration: decl } });
+    const r = await verifyManifest(ASSET_A, m);
+    assert.ok(r.success, `TV-25 Case B must pass (warning not failure): ${r.message}`);
+    const hasWarn = r.warnings.some(w => w.includes("compliance_eu_art50"));
+    assert.ok(hasWarn, "TV-25 Case B: expected compliance_eu_art50 warning");
+  });
+}
+
 // ── Runner ────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log("\n=== AIOSchema v0.5.5 TypeScript Test Suite ===\n");
+  console.log("\n=== AIOSchema v0.5.6 TypeScript Test Suite ===\n");
 
   await testConstants();
   await testAlgorithms();
@@ -519,6 +620,8 @@ async function main() {
   await testRFC3161();
   await testConformanceVectors();
   await testCrossImplVectors();
+  await testV056Vectors();
+  await testTV25();
 
   console.log(results.join("\n"));
   console.log(`\n${"=".repeat(44)}`);
@@ -531,3 +634,4 @@ async function main() {
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
+// -- end aioschema/typescript v0.5.6 | AIOSchema spec v0.5.6 --

@@ -1,4 +1,10 @@
 "use strict";
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/js v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
+
 const { test, describe, before, after } = require("node:test");
 const assert = require("node:assert/strict");
 const fs     = require("node:fs");
@@ -12,7 +18,7 @@ const {
   safeEqual, canonicalJson, canonicalBytes, canonicalManifestBytes,
   creatorIdAnonymous, creatorIdFromPublicKey, validateCreatorId, uuidV7,
   sidecarPath, saveSidecar, loadSidecar, AnchorVerificationError,
-  SPEC_VERSION, SUPPORTED_VERSIONS, CORE_HASH_FIELDS,
+  SPEC_VERSION, SUPPORTED_VERSIONS, MAX_EXTENSION_SIZE_BYTES, CORE_HASH_FIELDS,
   SOFT_BINDING_THRESHOLD_DEFAULT, SOFT_BINDING_THRESHOLD_MAX, HASH_REGEX,
 } = aios;
 
@@ -291,7 +297,7 @@ describe("Backward Compatibility (§14)", () => {
   test("All prior schema_version values accepted", async () => {
     const fp = makeTempFile(makeAsset()); try {
       const m = generateManifest(fp);
-      for (const v of ["0.1","0.2","0.3","0.3.1","0.4","0.5","0.5.1","0.5.5"]) {
+      for (const v of ["0.1","0.2","0.3","0.3.1","0.4","0.5","0.5.1","0.5.5","0.5.6"]) {
         const t = JSON.parse(JSON.stringify(m)); t.core.schema_version = v;
         const coreForFp = {}; for (const f of CORE_HASH_FIELDS) coreForFp[f] = t.core[f];
         t.core.core_fingerprint = computeHash(canonicalBytes(coreForFp), "sha256");
@@ -339,10 +345,10 @@ describe("Creator ID (§5.7)", () => {
 });
 
 describe("Version constants", () => {
-  test("SPEC_VERSION is 0.5.5", () => { assert.equal(SPEC_VERSION, "0.5.5"); });
-  test("SUPPORTED_VERSIONS includes 0.5.5", () => { assert.ok(SUPPORTED_VERSIONS.has("0.5.5")); });
+  test("SPEC_VERSION is 0.5.6", () => { assert.equal(SPEC_VERSION, "0.5.6"); });
+  test("SUPPORTED_VERSIONS includes 0.5.6", () => { assert.ok(SUPPORTED_VERSIONS.has("0.5.6")); });
   test("SUPPORTED_VERSIONS includes all prior versions", () => { for (const v of ["0.1","0.2","0.3","0.3.1","0.4","0.5","0.5.1"]) assert.ok(SUPPORTED_VERSIONS.has(v), `Missing version ${v}`); });
-  test("Generated manifest defaults to 0.5.5", async () => { const fp = makeTempFile(makeAsset()); try { const m = generateManifest(fp); assert.equal(m.core.schema_version, "0.5.5"); } finally { cleanup(fp); } });
+  test("Generated manifest defaults to 0.5.6", async () => { const fp = makeTempFile(makeAsset()); try { const m = generateManifest(fp); assert.equal(m.core.schema_version, "0.5.6"); } finally { cleanup(fp); } });
 });
 
 describe("Canonical bytes (§5.6, §5.8)", () => {
@@ -501,4 +507,87 @@ describe("TV-19: Key Rotation via previous_version_anchor", () => {
     } finally { cleanup(fp); }
   });
 
+  // ── TV-19 through TV-24 (v0.5.6) ──────────────────────────────────────────
+
+  test("TV-19: public_key fingerprint match — self-contained verification", async () => {
+    const { privateKey, publicKey } = generateKeypair();
+    const pubRaw = publicKey.export({ type: "spki", format: "der" }).slice(-32);
+    const pubB64 = pubRaw.toString("base64");
+    const creatorId = creatorIdFromPublicKey(publicKey);
+    const fp = makeTempFile(makeAsset());
+    try {
+      const m = generateManifest(fp, { creatorId, privateKey, extensions: { public_key: pubB64 } });
+      const r = await verifyManifest(fp, m);
+      assert.ok(r.success, `TV-19 failed: ${r.message}`);
+      assert.ok(r.signature_verified, "signature must verify via embedded public_key");
+      assert.ok(r.manifest_signature_verified, "manifest signature must verify via embedded public_key");
+    } finally { cleanup(fp); }
+  });
+
+  test("TV-20: public_key fingerprint mismatch — MUST fail", async () => {
+    const { privateKey: priv1, publicKey: pub1 } = generateKeypair();
+    const { publicKey: pub2 } = generateKeypair();
+    const pub2Raw = pub2.export({ type: "spki", format: "der" }).slice(-32);
+    const pub2B64 = pub2Raw.toString("base64");
+    const creatorId = creatorIdFromPublicKey(pub1);
+    const fp = makeTempFile(makeAsset());
+    try {
+      const m = generateManifest(fp, { creatorId, privateKey: priv1, extensions: { public_key: pub2B64 } });
+      const r = await verifyManifest(fp, m);
+      assert.ok(!r.success, "TV-20 must fail");
+      assert.ok(r.message.includes("fingerprint cross-check"), `Expected 'fingerprint cross-check' in: ${r.message}`);
+    } finally { cleanup(fp); }
+  });
+
+  test("TV-21: ai_declaration valid — constraint satisfied", async () => {
+    const decl = { disclosure_required: true, ai_generated: true, ai_manipulated: false, human_reviewed: true };
+    const fp = makeTempFile(makeAsset());
+    try {
+      const m = generateManifest(fp, { extensions: { ai_declaration: decl } });
+      const r = await verifyManifest(fp, m);
+      assert.ok(r.success, `TV-21 failed: ${r.message}`);
+    } finally { cleanup(fp); }
+  });
+
+  test("TV-22: ai_declaration constraint violation — MUST fail", async () => {
+    const decl = { disclosure_required: true, ai_generated: false, ai_manipulated: false, human_reviewed: false, standard_editing: true };
+    const fp = makeTempFile(makeAsset());
+    try {
+      const m = generateManifest(fp, { extensions: { ai_declaration: decl } });
+      const r = await verifyManifest(fp, m);
+      assert.ok(!r.success, "TV-22 must fail");
+      assert.ok(r.message.includes("standard_editing"), `Expected 'standard_editing' in: ${r.message}`);
+    } finally { cleanup(fp); }
+  });
+
+  test("TV-23: 4KB extension limit at boundary — MUST pass", async () => {
+    const fp = makeTempFile(makeAsset());
+    try {
+      const m = generateManifest(fp);
+      const currentSize = Buffer.byteLength(JSON.stringify(m.extensions), "utf-8");
+      const remaining = MAX_EXTENSION_SIZE_BYTES - currentSize;
+      if (remaining >= 14) {
+        m.extensions["padding"] = "x".repeat(remaining - 14);
+        const finalSize = Buffer.byteLength(JSON.stringify(m.extensions), "utf-8");
+        if (finalSize !== MAX_EXTENSION_SIZE_BYTES) {
+          const adj = MAX_EXTENSION_SIZE_BYTES - finalSize;
+          m.extensions["padding"] = "x".repeat(m.extensions["padding"].length + adj);
+        }
+      }
+      const r = await verifyManifest(fp, m);
+      assert.ok(r.success, `TV-23 failed: ${r.message}`);
+    } finally { cleanup(fp); }
+  });
+
+  test("TV-24: 4KB extension limit exceeded — MUST fail", async () => {
+    const fp = makeTempFile(makeAsset());
+    try {
+      const m = generateManifest(fp, { extensions: { padding: "x".repeat(MAX_EXTENSION_SIZE_BYTES) } });
+      const r = await verifyManifest(fp, m);
+      assert.ok(!r.success, "TV-24 must fail");
+      assert.ok(r.message.includes("4096"), `Expected '4096' in: ${r.message}`);
+    } finally { cleanup(fp); }
+  });
+
 });
+// -- end aioschema/js v0.5.6 | AIOSchema spec v0.5.6 --

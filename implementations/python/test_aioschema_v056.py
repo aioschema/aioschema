@@ -1,14 +1,8 @@
-"""
-AIOSchema v0.5.5 — Test Suite
-============================
-Covers all §5.4 required test vectors (TV-01 through TV-18),
-plus extended tests for multi-hash, manifest_signature, SHA-384,
-configurable soft-binding threshold, anchor verification, and
-backward compatibility.
-
-Run with: python test_aioschema_v055.py
-Or:       pytest test_aioschema_v055.py -v
-"""
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Ovidiu Ancuta
+#
+# aioschema/python v0.5.6 | AIOSchema spec v0.5.6
+# https://aioschema.org
 
 import copy
 import json
@@ -16,16 +10,20 @@ import os
 import sys
 import tempfile
 import unittest
+import base64
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
-from aioschema_v055 import (
+from aioschema_v056 import (
     AnchorResolver,
     AnchorVerificationError,
     SOFT_BINDING_THRESHOLD_DEFAULT,
     SOFT_BINDING_THRESHOLD_MAX,
+    MAX_EXTENSION_SIZE_BYTES,
     SPEC_VERSION,
     SUPPORTED_VERSIONS,
     CreatorId,
@@ -387,18 +385,18 @@ class TestSHA384(unittest.TestCase):
         self.assertEqual(len(h), len("sha384-") + 96)
 
     def test_sha384_regex_accepts_96_hex(self):
-        from aioschema_v055 import HASH_PATTERN
+        from aioschema_v056 import HASH_PATTERN
         valid = "sha384-" + "ab" * 48
         self.assertIsNotNone(HASH_PATTERN.match(valid))
 
     def test_sha384_regex_rejects_64_hex(self):
-        from aioschema_v055 import HASH_PATTERN
+        from aioschema_v056 import HASH_PATTERN
         # sha384 with only 64 hex chars (sha256 length) must be rejected
         invalid = "sha384-" + "ab" * 32
         self.assertIsNone(HASH_PATTERN.match(invalid))
 
     def test_sha256_regex_rejects_96_hex(self):
-        from aioschema_v055 import HASH_PATTERN
+        from aioschema_v056 import HASH_PATTERN
         # sha256 with 96 hex chars must be rejected
         invalid = "sha256-" + "ab" * 48
         self.assertIsNone(HASH_PATTERN.match(invalid))
@@ -888,6 +886,59 @@ class TestBatchOperations(unittest.TestCase):
 # Main
 # ---------------------------------------------------------------------------
 
+
+class TestTV25ComplianceEuArt50(unittest.TestCase):
+    """TV-25: compliance_eu_art50 extension conformance."""
+
+    def test_case_a_field_present_no_warning(self):
+        """Case A: compliance_eu_art50 present — no warning expected."""
+        with TempAsset(b"TV-25 compliance_eu_art50 test") as asset:
+            m = generate_manifest(
+                asset.path,
+                extensions={
+                    "ai_declaration": {
+                        "disclosure_required": True,
+                        "ai_generated": True,
+                        "ai_manipulated": False,
+                        "human_reviewed": True,
+                    },
+                    "compliance_eu_art50": {
+                        "editorial_responsibility": "Test Organisation",
+                        "review_type": "substantive",
+                    },
+                },
+            )
+            result = verify_manifest(asset.path, m)
+            self.assertTrue(result.success, result.message)
+            for w in result.warnings:
+                self.assertNotIn(
+                    "compliance_eu_art50", w,
+                    f"TV-25 Case A: unexpected warning: {w}",
+                )
+
+    def test_case_b_field_absent_warning_not_failure(self):
+        """Case B: human_reviewed=true but compliance_eu_art50 absent — warning, not failure."""
+        with TempAsset(b"TV-25 compliance_eu_art50 test") as asset:
+            m = generate_manifest(
+                asset.path,
+                extensions={
+                    "ai_declaration": {
+                        "disclosure_required": True,
+                        "ai_generated": True,
+                        "ai_manipulated": False,
+                        "human_reviewed": True,
+                    },
+                },
+            )
+            result = verify_manifest(asset.path, m)
+            self.assertTrue(
+                result.success,
+                f"TV-25 Case B must pass (warning not failure): {result.message}",
+            )
+            found = any("compliance_eu_art50" in w for w in result.warnings)
+            self.assertTrue(found, "TV-25 Case B: expected compliance_eu_art50 warning")
+
+
 if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite  = unittest.TestSuite()
@@ -915,7 +966,7 @@ if __name__ == "__main__":
 
     total = result.testsRun
     print(f"\n{'='*60}")
-    print(f"AIOSchema v0.5.5 Test Suite Summary")
+    print(f"AIOSchema v0.5.6 Test Suite Summary")
     print(f"{'='*60}")
     print(f"Tests run  : {total}")
     print(f"Failures   : {len(result.failures)}")
@@ -1001,7 +1052,7 @@ class TestPreviousVersionAnchor(unittest.TestCase):
         actually they should be the same since only CORE_HASH_FIELDS are hashed.
         This confirms the field is informational, not an integrity input.
         """
-        from aioschema_v055 import CORE_HASH_FIELDS
+        from aioschema_v056 import CORE_HASH_FIELDS
         self.assertNotIn("previous_version_anchor", CORE_HASH_FIELDS)
 
     def test_verification_passes_with_previous_version_anchor(self):
@@ -1171,7 +1222,7 @@ if __name__ == "__main__":
 
     total = result.testsRun
     print(f"\n{'='*60}")
-    print(f"AIOSchema v0.5.5 Test Suite Summary")
+    print(f"AIOSchema v0.5.6 Test Suite Summary")
     print(f"{'='*60}")
     print(f"Tests run  : {total}")
     print(f"Failures   : {len(result.failures)}")
@@ -1283,17 +1334,17 @@ class TestRFC3161Support(unittest.TestCase):
 
     def test_anchor_rfc3161_function_exists(self):
         """anchor_rfc3161 function must be importable."""
-        from aioschema_v055 import anchor_rfc3161
+        from aioschema_v056 import anchor_rfc3161
         self.assertTrue(callable(anchor_rfc3161))
 
     def test_verify_rfc3161_function_exists(self):
         """verify_rfc3161 function must be importable."""
-        from aioschema_v055 import verify_rfc3161
+        from aioschema_v056 import verify_rfc3161
         self.assertTrue(callable(verify_rfc3161))
 
     def test_anchor_rfc3161_accepts_core_fingerprint(self):
         """anchor_rfc3161 accepts a core_fingerprint string format."""
-        from aioschema_v055 import anchor_rfc3161, AnchorVerificationError
+        from aioschema_v056 import anchor_rfc3161, AnchorVerificationError
         # We can't make a real network call in tests
         # Verify the function signature and input validation work
         try:
@@ -1309,7 +1360,7 @@ class TestRFC3161Support(unittest.TestCase):
 
     def test_anchor_reference_format(self):
         """anchor_rfc3161 produces correctly formatted aios-anchor URI."""
-        from aioschema_v055 import _rfc3161_verify
+        from aioschema_v056 import _rfc3161_verify
         # Test the verification function with a mock TSR that contains the hash
         hash_hex = "a" * 64
         mock_tsr = b'\x30' + bytes([32]) + bytes.fromhex(hash_hex[:32])
@@ -1319,31 +1370,156 @@ class TestRFC3161Support(unittest.TestCase):
         self.assertIn("message", result)
 
 
+class TestV056SpecVersion(unittest.TestCase):
+    """Tests for v0.5.6 version constants."""
+
+    def test_spec_version_is_056(self):
+        """SPEC_VERSION must be 0.5.6."""
+        import aioschema_v056 as a
+        self.assertEqual(a.SPEC_VERSION, "0.5.6")
+
+    def test_supported_versions_includes_056(self):
+        """SUPPORTED_VERSIONS must include 0.5.6."""
+        import aioschema_v056 as a
+        self.assertIn("0.5.6", a.SUPPORTED_VERSIONS)
+
+    def test_generate_produces_056_version(self):
+        """Generated manifests default to schema_version 0.5.6."""
+        with TempAsset(b"version test") as path:
+            m = generate_manifest(path)
+            self.assertEqual(m.core["schema_version"], "0.5.6")
+
+
+class TestTV1924(unittest.TestCase):
+    """v0.5.6 Test Vectors: public_key, ai_declaration, 4KB limit."""
+
+    def test_tv19_public_key_fingerprint_match(self):
+        """TV-19: public_key fingerprint match — embedded key verifies signature."""
+        priv, pub = generate_keypair()
+        cid = CreatorId.from_public_key(pub)
+        pub_b64 = base64.b64encode(
+            pub.public_bytes(
+                serialization.Encoding.Raw,
+                serialization.PublicFormat.Raw
+            )
+        ).decode()
+        exts = {"public_key": pub_b64}
+        with TempAsset(b"TV-19 public key test") as path:
+            m = generate_manifest(path, private_key=priv, creator_id=cid, extensions=exts)
+            r = verify_manifest(path, m, public_key=None)
+            self.assertTrue(r.success, f"TV-19 failed: {r.message}")
+            self.assertTrue(r.signature_verified)
+            self.assertTrue(r.manifest_signature_verified)
+
+    def test_tv20_public_key_fingerprint_mismatch(self):
+        """TV-20: public_key fingerprint mismatch — MUST fail."""
+        priv1, pub1 = generate_keypair()
+        _, pub2 = generate_keypair()  # different key
+        cid1 = CreatorId.from_public_key(pub1)
+        pub2_b64 = base64.b64encode(
+            pub2.public_bytes(
+                serialization.Encoding.Raw,
+                serialization.PublicFormat.Raw
+            )
+        ).decode()
+        exts = {"public_key": pub2_b64}  # wrong key
+        with TempAsset(b"TV-20 mismatch test") as path:
+            m = generate_manifest(path, private_key=priv1, creator_id=cid1, extensions=exts)
+            r = verify_manifest(path, m, public_key=None)
+            self.assertFalse(r.success)
+            self.assertIn("fingerprint cross-check", r.message)
+
+    def test_tv21_ai_declaration_valid(self):
+        """TV-21: ai_declaration valid — all required fields, constraint satisfied."""
+        decl = {
+            "disclosure_required": True,
+            "ai_generated": True,
+            "ai_manipulated": False,
+            "human_reviewed": True,
+        }
+        exts = {"ai_declaration": decl}
+        with TempAsset(b"TV-21 ai declaration") as path:
+            m = generate_manifest(path, extensions=exts)
+            r = verify_manifest(path, m)
+            self.assertTrue(r.success, f"TV-21 failed: {r.message}")
+
+    def test_tv22_ai_declaration_constraint_violation(self):
+        """TV-22: ai_declaration constraint violation — standard_editing + disclosure_required."""
+        decl = {
+            "disclosure_required": True,  # violation
+            "ai_generated": False,
+            "ai_manipulated": False,
+            "human_reviewed": False,
+            "standard_editing": True,  # triggers constraint
+        }
+        exts = {"ai_declaration": decl}
+        with TempAsset(b"TV-22 constraint violation") as path:
+            m = generate_manifest(path, extensions=exts)
+            r = verify_manifest(path, m)
+            self.assertFalse(r.success)
+            self.assertIn("standard_editing", r.message)
+
+    def test_tv23_4kb_boundary(self):
+        """TV-23: 4KB extension limit at exact boundary — MUST pass."""
+        # Build a manifest with extensions exactly 4096 bytes (UTF-8 encoded JSON)
+        # Start with minimal extensions, then pad to fill exactly 4096 bytes.
+        with TempAsset(b"TV-23 boundary test") as path:
+            m = generate_manifest(path)
+            # Compute current extensions size
+            import json as _json
+            current_size = len(_json.dumps(m.extensions, separators=(",", ":")).encode("utf-8"))
+            # Add padding to reach exactly 4096
+            remaining = MAX_EXTENSION_SIZE_BYTES - current_size
+            # {"padding":""} adds 14 bytes overhead, so content = remaining - 14
+            if remaining >= 14:
+                m.extensions["padding"] = "x" * (remaining - 14)
+                # Re-verify exact size
+                final_size = len(_json.dumps(m.extensions, separators=(",", ":")).encode("utf-8"))
+                # If not exactly 4096, adjust
+                if final_size != MAX_EXTENSION_SIZE_BYTES:
+                    adj = MAX_EXTENSION_SIZE_BYTES - final_size
+                    m.extensions["padding"] = "x" * (len(m.extensions["padding"]) + adj)
+            r = verify_manifest(path, m)
+            self.assertTrue(r.success, f"TV-23 failed: {r.message}")
+
+    def test_tv24_4kb_exceeded(self):
+        """TV-24: 4KB extension limit exceeded — MUST fail."""
+        with TempAsset(b"TV-24 exceeded test") as path:
+            m = generate_manifest(path)
+            # Add padding to exceed 4096 bytes by 1
+            import json as _json
+            m.extensions["padding"] = "x" * MAX_EXTENSION_SIZE_BYTES  # way over
+            r = verify_manifest(path, m)
+            self.assertFalse(r.success)
+            self.assertIn("4096", r.message)
+
+
 class TestV055SpecVersion(unittest.TestCase):
     """Tests for v0.5.5 version constants."""
 
-    def test_spec_version_is_055(self):
-        """SPEC_VERSION must be 0.5.5."""
-        import aioschema_v055 as a
-        self.assertEqual(a.SPEC_VERSION, "0.5.5")
+    def test_spec_version_is_056(self):
+        """SPEC_VERSION must be 0.5.6."""
+        import aioschema_v056 as a
+        self.assertEqual(a.SPEC_VERSION, "0.5.6")
 
-    def test_supported_versions_includes_055(self):
-        """SUPPORTED_VERSIONS must include 0.5.5."""
-        import aioschema_v055 as a
-        self.assertIn("0.5.5", a.SUPPORTED_VERSIONS)
+    def test_supported_versions_includes_056(self):
+        """SUPPORTED_VERSIONS must include 0.5.6."""
+        import aioschema_v056 as a
+        self.assertIn("0.5.6", a.SUPPORTED_VERSIONS)
 
     def test_supported_versions_includes_all_prior(self):
         """All prior versions must remain supported."""
-        import aioschema_v055 as a
+        import aioschema_v056 as a
         for v in ["0.1", "0.2", "0.3", "0.3.1", "0.4", "0.5", "0.5.1"]:
             self.assertIn(v, a.SUPPORTED_VERSIONS, f"Missing version {v}")
 
-    def test_generate_produces_055_version(self):
-        """Generated manifests default to schema_version 0.5.5."""
+    def test_generate_produces_056_version(self):
+        """Generated manifests default to schema_version 0.5.6."""
         with TempAsset(b"version test") as path:
             m = generate_manifest(path)
-            self.assertEqual(m.core["schema_version"], "0.5.5")
+            self.assertEqual(m.core["schema_version"], "0.5.6")
 
 
 if __name__ == "__main__":
     unittest.main()
+# -- end aioschema/python v0.5.6 | AIOSchema spec v0.5.6 --

@@ -1,0 +1,39 @@
+{
+  "id": "TV-04",
+  "level": 2,
+  "category": "soft-binding",
+  "description": "Soft binding: hash_original is for the original image but verifier receives a similar image. pHash distance=0 is within threshold=5. Must succeed with match_type='soft'.",
+  "input": {
+    "manifest": {
+      "core": {
+        "asset_id": "17948f35-5da8-42dd-ba94-2c846577d699",
+        "schema_version": "0.5.6",
+        "creation_timestamp": "2026-05-10T12:00:00Z",
+        "hash_original": "sha256-1e20521d3d6ae3ab009d0a84e7df84547f3de063e51340cdc71da3bf1f42b22d",
+        "creator_id": "019c7cb0-6e40-7f21-873b-9a9cf13e4000",
+        "signature": null,
+        "manifest_signature": null,
+        "anchor_reference": null,
+        "previous_version_anchor": null,
+        "core_fingerprint": "sha256-50b3899329f885bbc15ca0be32f36415d78c7b5e7fc803a80e6a87108fe08357"
+      },
+      "extensions": {
+        "soft_binding": {
+          "algorithm": "pHash-v1",
+          "fingerprint": "705af05af05af0a5",
+          "threshold_info": 5
+        }
+      }
+    },
+    "asset_data_hex": "89504e470d0a1a0a0000000d49484452000000400000004008000000008f022e020000011449444154789cdd96b10ec2300c44098a942e0c7c337fcbc0c2c0c0c2002d6de3d877e705e1b577af49649f5c2eadb563d3ab9e7ac00931cea21e40d97b00696fad4e89bf2f2760fc7bcd0aa0d85700cdbe0084cb7faadc11ab53e59005408777aa020057120302410408f90120bea00b401ed80160bd3904a0bd3900e0ad6d0298c93000dc60f50072aef7003a16b6002155d6002955be00319466809c69e58a389d2a8f2ca06601e724e0ef3311b89f07809a6b0c007b7304805b3b91896f8d9c899b354fb71b0076ae77003e16e835cfc9442d94b84c34344c26da6bde0d707a559e59c0146bdc4222cd7d2000e02b4240f4fda7d73cacb97299385ef3f0d6b601c4605a006aaeb535cfc9443a55844cdc6a5e40f67944a267eebc0000000049454e44ae426082",
+    "soft_binding_threshold": 5,
+    "public_key_b64": null,
+    "verify_anchor": false,
+    "note": "orig_phash=705af05af05af0a5, similar_phash=705af05af05af0a5, distance=0"
+  },
+  "expected": {
+    "success": true,
+    "match_type": "soft",
+    "signature_verified": false
+  }
+}

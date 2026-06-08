@@ -1,0 +1,39 @@
+{
+  "id": "TV-05",
+  "level": 2,
+  "category": "soft-binding",
+  "description": "Soft binding: verifier receives a very different image. pHash distance=60 exceeds threshold=5. Must fail.",
+  "input": {
+    "manifest": {
+      "core": {
+        "asset_id": "17948f35-5da8-42dd-ba94-2c846577d699",
+        "schema_version": "0.5.6",
+        "creation_timestamp": "2026-05-10T12:00:00Z",
+        "hash_original": "sha256-1e20521d3d6ae3ab009d0a84e7df84547f3de063e51340cdc71da3bf1f42b22d",
+        "creator_id": "019c7cb0-6e40-7f21-873b-9a9cf13e4000",
+        "signature": null,
+        "manifest_signature": null,
+        "anchor_reference": null,
+        "previous_version_anchor": null,
+        "core_fingerprint": "sha256-50b3899329f885bbc15ca0be32f36415d78c7b5e7fc803a80e6a87108fe08357"
+      },
+      "extensions": {
+        "soft_binding": {
+          "algorithm": "pHash-v1",
+          "fingerprint": "705af05af05af0a5",
+          "threshold_info": 5
+        }
+      }
+    },
+    "asset_data_hex": "89504e470d0a1a0a0000000d49484452000000400000004008000000008f022e020000010d49444154789ccd97bd0ec2300c84b10403030b034fcf3b32742112030b3fa9129fcf6709eab1bdfbd444f6c9b56babd57e993f771e8f9a3980b1bf443340c23e03a4ec2320691f00f4ddcd0179fb0aa0d83b40faf06b806a6fcd4e8c1594edaa00eae34179c3d41794c480401002a2f701203e200430170c005c73b900b6371d00dfda53406632d44cfc68b44cec344a26ae346b80100b3d404a952f400ca53740ce34bb304e5076ac021e55c0ad08d87e26867c0c20ce87005473f900b2374b99b8f85fc0c7829c89fe9a971ccc01909d6b61cd0399a8a44a3613074d2e13fd354fb5b76667c289ca0e55c0bd0860220d5e1001c08a8daf79bfc8447fcd637bb3f2eb0b323131d7fffff57d02ac5e88630397f1770000000049454e44ae426082",
+    "soft_binding_threshold": 5,
+    "public_key_b64": null,
+    "verify_anchor": false,
+    "note": "orig_phash=705af05af05af0a5, diff_phash=0ea50fa70ea50f5a, distance=60"
+  },
+  "expected": {
+    "success": false,
+    "match_type": null,
+    "message_contains": "threshold"
+  }
+}

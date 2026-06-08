@@ -1,13 +1,20 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/go v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
+
 package aioschema_test
 
 // cross_verify_test.go
 //
-// Loads cross_verify_vectors.json and asserts all 14 CV vectors pass.
+// Loads cross_verify_vectors.json and asserts all 18 CV vectors pass.
 // The vectors file must be present at ../../cross_verify_vectors.json
 // (i.e., the project root when tests are run from the package directory),
 // OR at the path specified by the AIOSCHEMA_VECTORS env var.
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -50,19 +57,23 @@ type fingerprintInputs struct {
 	CoreFields map[string]interface{} `json:"core_fields"`
 }
 
-// manifestInputs is used for CV-07..CV-14
+// manifestInputs is used for CV-07..CV-18
 type manifestInputs struct {
-	AssetHex string                 `json:"asset_hex"`
-	Manifest map[string]interface{} `json:"manifest"`
+	AssetHex    string                 `json:"asset_hex"`
+	Manifest    map[string]interface{} `json:"manifest"`
+	PublicKeyB64 string               `json:"public_key_b64,omitempty"`
 }
 
 // expectedHash is used for CV-01..CV-06
 type expectedHash = string
 
-// expectedSuccess is used for CV-07..CV-14
+// expectedSuccess is used for CV-07..CV-18
 type expectedSuccess struct {
 	Success   bool   `json:"success"`
 	MatchType string `json:"match_type,omitempty"`
+	MessageContains string `json:"message_contains,omitempty"`
+	SignatureVerified bool `json:"signature_verified,omitempty"`
+	ManifestSignatureVerified bool `json:"manifest_signature_verified,omitempty"`
 }
 
 func loadVectors(t *testing.T) *vectorFile {
@@ -112,8 +123,8 @@ func readVectorFile(t *testing.T, path string) *vectorFile {
 func TestCrossVerify_AllVectors(t *testing.T) {
 	vf := loadVectors(t)
 
-	if len(vf.Vectors) != 14 {
-		t.Errorf("expected 14 vectors, got %d", len(vf.Vectors))
+	if len(vf.Vectors) != 18 {
+		t.Errorf("expected 18 vectors, got %d", len(vf.Vectors))
 	}
 
 	for _, v := range vf.Vectors {
@@ -126,7 +137,8 @@ func TestCrossVerify_AllVectors(t *testing.T) {
 				runCanonicalJSONVector(t, v)
 			case "CV-06":
 				runCoreFingerprintVector(t, v)
-			case "CV-07", "CV-08", "CV-09", "CV-10", "CV-11", "CV-12", "CV-13", "CV-14":
+			case "CV-07", "CV-08", "CV-09", "CV-10", "CV-11", "CV-12", "CV-13", "CV-14",
+				 "CV-15", "CV-16", "CV-17", "CV-18":
 				runManifestVerifyVector(t, v)
 			default:
 				t.Errorf("unknown vector id %q", v.ID)
@@ -264,7 +276,20 @@ func runManifestVerifyVector(t *testing.T, v vector) {
 		t.Fatalf("unmarshal manifest: %v", err)
 	}
 
-	result, err := aioschema.VerifyManifest(assetData, &m, aioschema.VerifyOptions{})
+	// Decode public key if provided
+	opts := aioschema.VerifyOptions{}
+	if inp.PublicKeyB64 != "" {
+		pubBytes, err := base64.StdEncoding.DecodeString(inp.PublicKeyB64)
+		if err != nil {
+			t.Fatalf("decode public_key_b64: %v", err)
+		}
+		if len(pubBytes) != 32 {
+			t.Fatalf("public_key_b64 decoded to %d bytes, expected 32", len(pubBytes))
+		}
+		opts.PublicKeyHex = hex.EncodeToString(pubBytes)
+	}
+
+	result, err := aioschema.VerifyManifest(assetData, &m, opts)
 	if err != nil {
 		t.Fatalf("VerifyManifest returned error: %v", err)
 	}
@@ -279,4 +304,23 @@ func runManifestVerifyVector(t *testing.T, v vector) {
 			t.Errorf("match_type=%q (want %q)", result.MatchType, exp.MatchType)
 		}
 	}
+	if exp.MessageContains != "" {
+		if result.Message == "" || !contains(result.Message, exp.MessageContains) {
+			t.Errorf("message does not contain %q: %s", exp.MessageContains, result.Message)
+		}
+	}
 }
+
+func contains(s, sub string) bool {
+	return len(sub) == 0 || len(s) >= len(sub) && (s == sub || len(s) > 0 && containsStr(s, sub))
+}
+
+func containsStr(s, sub string) bool {
+	for i := 0; i+len(sub) <= len(s); i++ {
+		if s[i:i+len(sub)] == sub {
+			return true
+		}
+	}
+		return false
+}
+// -- end aioschema/go v0.5.6 | AIOSchema spec v0.5.6 --

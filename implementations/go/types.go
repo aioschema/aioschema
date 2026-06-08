@@ -1,16 +1,23 @@
-// Package aioschema implements the AIOSchema v0.5.5 content provenance standard.
-// Spec: https://aioschema.org
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/go v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
+
 package aioschema
 
 import "encoding/json"
 
 // SpecVersion is the version of the AIOSchema specification this package implements.
-const SpecVersion = "0.5.5"
+const SpecVersion = "0.5.6"
+
+// MaxExtensionSizeBytes is the maximum allowed size for extensions JSON (§6.3).
+const MaxExtensionSizeBytes = 4096
 
 // SupportedVersions lists all schema_version values accepted by this verifier.
 var SupportedVersions = map[string]bool{
 	"0.1": true, "0.2": true, "0.3": true, "0.3.1": true,
-	"0.4": true, "0.5": true, "0.5.1": true, "0.5.5": true,
+	"0.4": true, "0.5": true, "0.5.1": true, "0.5.5": true, "0.5.6": true,
 }
 
 // CoreHashFields are the manifest core fields that constitute the canonical input
@@ -154,3 +161,4 @@ type VerifyOptions struct {
 	// Resolver is the AnchorResolver callback for Level 3 verification.
 	Resolver AnchorResolver
 }
+// -- end aioschema/go v0.5.6 | AIOSchema spec v0.5.6 --

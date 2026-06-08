@@ -1,11 +1,14 @@
-/**
- * AIOSchema v0.5.5 — Verification procedure (§10)
- */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/typescript v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
 
 import * as nodeCrypto from "crypto";
 import {
   SUPPORTED_VERSIONS, HASH_REGEX, CORE_HASH_FIELDS, MatchType,
-  Manifest, VerificationResult, VerifyOptions, AnchorVerificationError
+  Manifest, VerificationResult, VerifyOptions, AnchorVerificationError,
+  MAX_EXTENSION_SIZE_BYTES
 } from "./types";
 import {
   computeHash, parseHash, safeEqual, canonicalJson,
@@ -39,10 +42,63 @@ export async function verifyManifest(
 ): Promise<VerificationResult> {
   const warnings: string[] = [];
   const core = manifest.core;
+  const ext = manifest.extensions;
   const softThreshold = Math.min(
     options.softThreshold ?? SOFT_BINDING_THRESHOLD_DEFAULT,
     SOFT_BINDING_THRESHOLD_MAX
   );
+
+  // §6.3 — Extension size limit
+  if (ext && Object.keys(ext).length > 0) {
+    const extSize = Buffer.byteLength(JSON.stringify(ext), "utf-8");
+    if (extSize > MAX_EXTENSION_SIZE_BYTES) {
+      return fail(`Extensions size (${extSize} bytes) exceeds limit of ${MAX_EXTENSION_SIZE_BYTES} bytes (§6.3)`);
+    }
+  }
+
+  // §11.1 — ai_declaration constraint validation
+  const aiDecl = ext?.ai_declaration as Record<string, unknown> | undefined;
+  if (aiDecl && typeof aiDecl === "object") {
+    if (aiDecl.standard_editing === true && aiDecl.disclosure_required === true) {
+      return fail(
+        "ai_declaration constraint violation: standard_editing is true but " +
+        "disclosure_required is also true. Per Article 50.2, standard editing " +
+        "does not trigger AI disclosure obligations."
+      );
+    }
+    if (aiDecl.human_reviewed === true && !ext?.["compliance_eu_art50"]) {
+      warnings.push(
+        "ai_declaration.human_reviewed is true but compliance_eu_art50 " +
+        "extension is absent (SHOULD be present per §11.1)"
+      );
+    }
+  }
+
+  // §11.3 — public_key fingerprint cross-check
+  let embeddedPublicKey: Uint8Array | null = null;
+  const pkB64 = ext?.public_key as string | undefined;
+  if (pkB64 && typeof pkB64 === "string") {
+    try {
+      const pkBytes = Buffer.from(pkB64, "base64");
+      if (pkBytes.length !== 32) {
+        return fail(`extensions.public_key decoded to ${pkBytes.length} bytes, expected 32 (Ed25519)`);
+      }
+      // Fingerprint cross-check: SHA-256(pubkey)[:32 hex] must match creator_id
+      const fpHash = nodeCrypto.createHash("sha256").update(pkBytes).digest("hex").slice(0, 32);
+      const expectedCreatorId = `ed25519-fp-${fpHash}`;
+      if (!safeEqual(core.creator_id, expectedCreatorId)) {
+        return fail(
+          "extensions.public_key fingerprint cross-check failed: " +
+          "embedded key does not belong to declared creator_id. " +
+          `Expected ed25519-fp derived from key: ${expectedCreatorId}, ` +
+          `manifest creator_id: ${core.creator_id}`
+        );
+      }
+      embeddedPublicKey = pkBytes;
+    } catch {
+      return fail("extensions.public_key is not valid Base64");
+    }
+  }
 
   // Step 1: schema_version
   if (!SUPPORTED_VERSIONS.has(core.schema_version)) {
@@ -58,8 +114,9 @@ export async function verifyManifest(
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(core.asset_id))
     return fail(`Invalid asset_id format: ${core.asset_id}`);
 
-  // Step 4: creator_id
-  if (!/^ed25519-fp-[0-9a-f]{32}$/.test(core.creator_id))
+  // Step 4: creator_id — ed25519-fp- fingerprint or anonymous UUID
+  if (!/^ed25519-fp-[0-9a-f]{32}$/.test(core.creator_id) &&
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(core.creator_id))
     return fail(`Invalid creator_id format: ${core.creator_id}`);
 
   // Step 5: hash_original
@@ -104,37 +161,44 @@ export async function verifyManifest(
     return fail("Manifest integrity check failed: core_fingerprint mismatch. Core metadata may have been tampered.", { matchType, warnings });
   }
 
-  // Step 10: signature (optional)
-  let signatureVerified = false;
-  if (core.signature && options.publicKey) {
-    try {
-      const hashStr = Array.isArray(core.hash_original) ? core.hash_original[0] : core.hash_original;
-      const hashBytes = Buffer.from(hashStr.split("-")[1], "hex");
-      const sig = Buffer.from(core.signature, "base64url");
-      const verifyFn = (nodeCrypto as any).createVerify("ed25519");
-      verifyFn.update(hashBytes);
-      signatureVerified = verifyFn.verify(
-        { key: Buffer.from(options.publicKey), format: "der", type: "spki" }, sig
-      );
-      if (!signatureVerified) warnings.push("Signature verification failed.");
-    } catch { warnings.push("Signature verification skipped: crypto error."); }
-  } else if (core.signature) {
-    warnings.push("Signature present but no public key provided — skipped.");
+  // Step 10: signature (optional) — §11.3: prefer embedded key if no external key provided
+  const verifyKeyRaw = options.publicKey ?? embeddedPublicKey;
+  // Pre-compute SPKI-wrapped public key for signature verification
+  const SPKI_ED25519_HEADER = Buffer.from([0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00]);
+  let pubKeyObj: ReturnType<typeof nodeCrypto.createPublicKey> | null = null;
+  if (verifyKeyRaw) {
+    const verifyKeySpki = Buffer.concat([SPKI_ED25519_HEADER, Buffer.from(verifyKeyRaw)]);
+    pubKeyObj = nodeCrypto.createPublicKey({ key: verifyKeySpki, format: "der", type: "spki" });
   }
 
-  // Step 11: manifest_signature (optional)
-  let manifestSignatureVerified = false;
-  if (core.manifest_signature && options.publicKey) {
+  let signatureVerified = false;
+  if (core.signature) {
+    if (!verifyKeyRaw) {
+      return fail("Manifest is signed but no public key was provided (neither externally nor via extensions.public_key).", { matchType, warnings });
+    }
     try {
-      const mBytes = canonicalManifestBytes(manifest);
-      const sig = Buffer.from(core.manifest_signature, "base64url");
-      const verifyFn = (nodeCrypto as any).createVerify("ed25519");
-      verifyFn.update(mBytes);
-      manifestSignatureVerified = verifyFn.verify(
-        { key: Buffer.from(options.publicKey), format: "der", type: "spki" }, sig
-      );
-      if (!manifestSignatureVerified) warnings.push("Manifest signature verification failed.");
-    } catch { warnings.push("Manifest signature verification skipped: crypto error."); }
+      const sig = Buffer.from(core.signature.replace(/^ed25519-/, ""), "hex");
+      const coreBytes = Buffer.from(canonicalJson(coreForFp), "utf-8");
+      signatureVerified = nodeCrypto.verify(null, coreBytes, pubKeyObj!, sig);
+      if (!signatureVerified) return fail("Core signature verification failed: invalid signature or wrong key.", { matchType, warnings });
+    } catch (e) { return fail(`Signature verification error: ${e instanceof Error ? e.message : String(e)}`, { matchType, warnings }); }
+  }
+
+  // Step 11: manifest_signature (optional) — §11.3: prefer embedded key
+  let manifestSignatureVerified = false;
+  if (core.manifest_signature) {
+    if (!verifyKeyRaw) {
+      return fail("manifest_signature present but no public key was provided (neither externally nor via extensions.public_key).", { matchType, warnings });
+    }
+    try {
+      // Nullify manifest_signature before computing canonical bytes (§5.8)
+      const manifestForSig = { core: { ...manifest.core, manifest_signature: null }, extensions: manifest.extensions };
+      const mBytes = canonicalJson(manifestForSig);
+      const sig = Buffer.from(core.manifest_signature.replace(/^ed25519-/, ""), "hex");
+
+      manifestSignatureVerified = nodeCrypto.verify(null, mBytes, pubKeyObj, sig);
+      if (!manifestSignatureVerified) return fail("Manifest signature verification failed: invalid or extensions tampered.", { matchType, warnings });
+    } catch (e) { warnings.push(`Manifest signature verification skipped: crypto error: ${e instanceof Error ? e.message : String(e)}`); }
   }
 
   // Step 12: anchor (optional)
@@ -163,3 +227,4 @@ export async function verifyManifest(
     { matchType, signatureVerified, manifestSignatureVerified, anchorVerified, warnings }
   );
 }
+// -- end aioschema/typescript v0.5.6 | AIOSchema spec v0.5.6 --

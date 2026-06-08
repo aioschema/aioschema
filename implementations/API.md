@@ -1,8 +1,12 @@
-# AIOSchema Public API (v0.5.5)
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+<!-- Copyright 2026 Ovidiu Ancuta -->
+<!-- AIOSchema Public API v0.5.6 | AIOSchema spec v0.5.6 | https://aioschema.org -->
 
-> **AIOSchema v0.5.5 (Technical Preview)**
-> © 2026 Ovidiu Ancuta — Founder | https://aioschema.org
-> Licensed under CC‑BY 4.0 — attribution required for reuse, modification, or redistribution.
+# AIOSchema Public API (v0.5.6)
+
+> **AIOSchema v0.5.6**
+> © 2026 Ovidiu Ancuta: Founder | https://aioschema.org
+> Licensed under CC-BY 4.0: attribution required for reuse, modification, or redistribution.
 > https://creativecommons.org/licenses/by/4.0/
 
 This document defines the stable, language-agnostic API surface for AIOSchema
@@ -26,7 +30,7 @@ expose these functions with equivalent behavior. Language naming conventions app
 ```
 {
   asset_id:                string        -- UUID v7 (SHOULD) or UUID v4 (MAY)
-  schema_version:          string        -- e.g. "0.5.5"
+  schema_version:          string        -- e.g. "0.5.6"
   creation_timestamp:      string        -- ISO 8601 UTC, ends with "Z"
   hash_original:           string | string[]
   creator_id:              string        -- UUID (anonymous) or ed25519-fp-<32hex>
@@ -47,8 +51,9 @@ expose these functions with equivalent behavior. Language naming conventions app
   signature_verified:         boolean
   manifest_signature_verified: boolean
   anchor_checked:             boolean
-  anchor_verified:            boolean
-  warnings:                   string[]
+  anchor_verified:             boolean
+  public_key_fingerprint_match: boolean | null
+  warnings:                    string[]
 }
 ```
 
@@ -67,18 +72,18 @@ expose these functions with equivalent behavior. Language naming conventions app
 
 ### generateManifest(data, options)
 
-Generate an AIOSchema v0.5.5 manifest for an asset.
+Generate an AIOSchema v0.5.6 manifest for an asset.
 
 **Parameters**
-- `data` — asset bytes (Buffer / bytes / Uint8Array) or file path (string)
+- `data`: asset bytes (Buffer / bytes / Uint8Array) or file path (string)
 - `options`:
-  - `algorithms` — `string[]` — hash algorithms to use. Default: `["sha256"]`. See §19.1.
-  - `creatorId` — `string` — override creator_id. Default: anonymous UUID v7.
-  - `anchorRef` — `string | null` — anchor URI in `aios-anchor:<svc>:<id>` format (§9.1).
-  - `previousVersionAnchor` — `string | null` — anchor URI of predecessor version (§15).
-  - `privateKey` — signing key object (language-specific). When provided, generates `signature` and `manifest_signature`.
-  - `extensions` — `object` — additional extension fields merged into the manifest.
-  - `saveSidecar` — `boolean` — write `<asset>.aios.json` sidecar. Default: `false`.
+  - `hashAlgorithms`: `string | string[]`: hash algorithm(s) to use. Default: `"sha256"`. See §17.1.
+  - `creatorId`: `string`: override creator_id. Default: anonymous UUID v7.
+  - `anchorRef`: `string | null`: anchor URI in `aios-anchor:<svc>:<id>` format (§9.1).
+  - `previousVersionAnchor`: `string | null`: anchor URI of predecessor version (§5.1).
+  - `privateKey`: signing key object (language-specific). When provided, generates `signature` and `manifest_signature`.
+  - `extensions`: `object`: additional extension fields merged into the manifest.
+  - `saveSidecar`: `boolean`: write `<asset>.aios.json` sidecar. Default: `false`.
 
 **Returns** `Manifest`
 
@@ -91,21 +96,21 @@ Generate an AIOSchema v0.5.5 manifest for an asset.
 Verify an asset against an AIOSchema manifest. Executes all steps defined in §10.
 
 **Parameters**
-- `data` — asset bytes or file path
-- `manifest` — `Manifest` object or raw dict/object
+- `data`: asset bytes or file path
+- `manifest`: `Manifest` object or raw dict/object
 - `options`:
-  - `publicKey` — verification key object (language-specific). Required if manifest is signed.
-  - `softBindingThreshold` — `number` — Hamming distance policy threshold. Default: `5`, max: `10`. Never read from manifest (§6.2).
-  - `verifyAnchor` — `boolean` — invoke `anchorResolver` to verify anchor. Default: `false`.
-  - `anchorResolver` — `(ref: string) => AnchorRecord | null` — callable for anchor verification (§9.2). Returns `null` if record not found. Raises `AnchorVerificationError` on service error.
+  - `publicKey`: verification key object (language-specific). Required if manifest is signed.
+  - `softBindingThreshold`: `number`: Hamming distance policy threshold. Default: `5`, max: `10`. Never read from manifest (§6.2).
+  - `verifyAnchor`: `boolean`: invoke `anchorResolver` to verify anchor. Default: `false`.
+  - `anchorResolver`: `(ref: string) => AnchorRecord | null`: callable for anchor verification (§9.2). Returns `null` if record not found. Raises `AnchorVerificationError` on service error.
 
 **Returns** `VerificationResult`
 
 **Notes**
 - Returns `success: false` on any normative failure. Never throws on verification failure.
-- `match_type: "hard"` — bit-exact hash match.
-- `match_type: "soft"` — perceptual hash match within threshold.
-- Anchor mismatch does not fail verification — it produces a warning.
+- `match_type: "hard"`: bit-exact hash match.
+- `match_type: "soft"`: perceptual hash match within threshold.
+- Anchor mismatch does not fail verification: it produces a warning.
 
 ---
 
@@ -116,10 +121,10 @@ Verify an asset against an AIOSchema manifest. Executes all steps defined in §1
 Compute a prefixed hash string over raw bytes.
 
 **Parameters**
-- `data` — bytes
-- `algorithm` — registered algorithm token (§19.1). Default: `"sha256"`.
+- `data`: bytes
+- `algorithm`: registered algorithm token (§17.1). Default: `"sha256"`.
 
-**Returns** `string` — format: `<alg>-<hex>` e.g. `"sha256-d7a8fb..."`
+**Returns** `string`: format: `<alg>-<hex>` e.g. `"sha256-d7a8fb..."`
 
 **Throws** if algorithm is not in the registry.
 
@@ -137,7 +142,7 @@ Used for `core_fingerprint` computation (§5.6) and `manifest_signature` (§5.8)
 ### canonicalManifestBytes(manifest)
 
 Return canonical bytes for `manifest_signature` computation. Sets
-`manifest_signature` to `null` before serializing (bootstrap exclusion — §5.8).
+`manifest_signature` to `null` before serializing (bootstrap exclusion: §5.8).
 
 **Returns** bytes (Buffer / bytes)
 
@@ -156,10 +161,10 @@ Generate an anonymous `creator_id` (UUID v7). No identity disclosed.
 ### creatorIdFromPublicKey(pubKeyBytes)
 
 Generate an attributed `creator_id` from raw Ed25519 public key bytes.
-Returns `ed25519-fp-<32hex>` — SHA-256 fingerprint of the public key, first 128 bits.
+Returns `ed25519-fp-<32hex>`: SHA-256 fingerprint of the public key, first 128 bits.
 
 **Parameters**
-- `pubKeyBytes` — raw public key bytes (32 bytes)
+- `pubKeyBytes`: raw public key bytes (32 bytes)
 
 **Returns** `string`
 
@@ -171,7 +176,7 @@ Returns `ed25519-fp-<32hex>` — SHA-256 fingerprint of the public key, first 12
 
 Generate an Ed25519 keypair for signing.
 
-**Returns** `{ privateKey, publicKey }` — language-specific key objects.
+**Returns** `{ privateKey, publicKey }`: language-specific key objects.
 
 ---
 
@@ -208,7 +213,7 @@ Read and parse the sidecar at `<assetPath>.aios.json`.
 ### AnchorVerificationError
 
 Raised by an `anchorResolver` to signal a service-level error (network failure,
-timeout, invalid response). Distinct from a verification failure — the manifest
+timeout, invalid response). Distinct from a verification failure: the manifest
 itself may be valid even if the anchor service is unreachable.
 
 ---
@@ -217,7 +222,7 @@ itself may be valid even if the anchor service is unreachable.
 
 | Constant | Value | Description |
 |---|---|---|
-| `SPEC_VERSION` | `"0.5.5"` | Current specification version |
+| `SPEC_VERSION` | `"0.5.6"` | Current specification version |
 | `SUPPORTED_VERSIONS` | Set of strings | All accepted `schema_version` values |
 | `CORE_HASH_FIELDS` | Array of strings | Fields included in `core_fingerprint` computation |
 | `SOFT_BINDING_THRESHOLD_DEFAULT` | `5` | Default verifier policy threshold |
@@ -226,25 +231,27 @@ itself may be valid even if the anchor service is unreachable.
 
 ---
 
-## Mechanism Registries (§19)
+## Mechanism Registries (§17)
 
 Algorithm support is registry-driven, not hardcoded. Implementations MUST use
 registered mechanisms. New mechanisms may be proposed at
 `https://aioschema.org/registry/propose`.
 
-### Hash Algorithm Registry (§19.1)
+### Hash Algorithm Registry (§17.1)
 | Token | Digest Length | Status |
 |---|---|---|
 | `sha256` | 64 hex chars | REQUIRED |
 | `sha3-256` | 64 hex chars | OPTIONAL |
 | `sha384` | 96 hex chars | OPTIONAL |
 
-### Signature Algorithm Registry (§19.2)
+### Signature Algorithm Registry (§17.2)
 | Token | Status |
 |---|---|
 | `ed25519` | REQUIRED |
 
-### Soft Binding Algorithm Registry (§19.3)
+### Soft Binding Algorithm Registry (§17.3)
 | Token | Status |
 |---|---|
 | `pHash-v1` | OPTIONAL |
+
+<!-- end AIOSchema Public API v0.5.6 | AIOSchema spec v0.5.6 | https://aioschema.org -->

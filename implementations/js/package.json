@@ -1,7 +1,7 @@
 {
   "name": "@aioschema/js",
-  "version": "0.5.5",
-  "description": "AIOSchema v0.5.5 — Node.js reference implementation library.",
+  "version": "0.5.6",
+  "description": "AIOSchema v0.5.6 \u2014 Node.js reference implementation library.",
   "main": "aioschema_v055.js",
   "files": [
     "aioschema_v055.js",
@@ -15,8 +15,6 @@
     "manifest",
     "cryptographic-hash",
     "ed25519",
-    "bitcoin",
-    "opentimestamps",
     "ai-content",
     "chain-of-custody"
   ],

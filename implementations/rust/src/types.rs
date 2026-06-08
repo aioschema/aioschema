@@ -1,4 +1,8 @@
-//! AIOSchema v0.5.5 type definitions.
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/rust v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
@@ -6,10 +10,13 @@ use std::collections::BTreeMap;
 
 // ── Spec constants ────────────────────────────────────────────────────────────
 
-pub const SPEC_VERSION: &str = "0.5.5";
+pub const SPEC_VERSION: &str = "0.5.6";
+
+/// Maximum allowed size for extensions JSON in bytes (§6.3).
+pub const MAX_EXTENSION_SIZE_BYTES: usize = 4096;
 
 pub const SUPPORTED_VERSIONS: &[&str] = &[
-    "0.1", "0.2", "0.3", "0.3.1", "0.4", "0.5", "0.5.1", "0.5.5",
+    "0.1", "0.2", "0.3", "0.3.1", "0.4", "0.5", "0.5.1", "0.5.5", "0.5.6",
 ];
 
 /// Fields whose canonical JSON is hashed to produce `core_fingerprint` (§5.6).
@@ -225,3 +232,4 @@ pub enum AiosError {
     #[error("{0}")]
     Other(String),
 }
+// -- end aioschema/rust v0.5.6 | AIOSchema spec v0.5.6 --

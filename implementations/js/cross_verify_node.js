@@ -1,13 +1,10 @@
 "use strict";
-/**
- * AIOSchema v0.5.5 — Node.js Cross-Verify Runner
- * ================================================
- * Runs all 14 CV vectors from cross_verify_vectors.json
- * and reports PASS/FAIL for each — confirming Node.js
- * implementation produces identical results to Python and TypeScript.
- *
- * Run with: node cross_verify_node.js
- */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/js v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
+
 const fs   = require("node:fs");
 const path = require("node:path");
 const aios = require("./aioschema_v055.js");
@@ -95,7 +92,7 @@ async function run() {
     }
   }
 
-  console.log("\nAIOSchema v0.5.5 — Node.js Cross-Verify");
+  console.log("\nAIOSchema v0.5.6 — Node.js Cross-Verify");
   console.log("=".repeat(50));
   lines.forEach(l => console.log(l));
   console.log("=".repeat(50));
@@ -105,3 +102,4 @@ async function run() {
 }
 
 run();
+// -- end aioschema/js v0.5.6 | AIOSchema spec v0.5.6 --

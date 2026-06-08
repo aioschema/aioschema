@@ -1,7 +1,7 @@
 {
   "name": "@aioschema/cli",
-  "version": "0.5.12",
-  "description": "AIOSchema v0.5.5 — command-line tool for generating and verifying provenance manifests.",
+  "version": "0.5.13",
+  "description": "AIOSchema v0.5.6: command-line tool for generating and verifying provenance manifests.",
   "main": "cli.js",
   "bin": {
     "aioschema": "./cli.js"
@@ -12,7 +12,7 @@
     "LICENSE.md"
   ],
   "dependencies": {
-    "@aioschema/js": "0.5.5"
+    "@aioschema/js": "0.5.6"
   },
   "keywords": [
     "aioschema",

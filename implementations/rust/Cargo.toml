@@ -1,14 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Ovidiu Ancuta
+#
+# aioschema/rust v0.5.6 | AIOSchema spec v0.5.6
+# https://aioschema.org
+
 [package]
 name        = "aioschema"
-version     = "0.5.5"
+version     = "0.5.6"
 edition     = "2021"
-description = "AIOSchema v0.5.5 — content provenance standard reference implementation"
+description = "AIOSchema v0.5.6 — content provenance standard reference implementation"
 license     = "proprietary"
 
 [dependencies]
 sha2          = "0.10"
 sha3          = "0.10"
 ed25519-dalek = { version = "2", features = [] }
+base64        = "0.22"
 hex           = "0.4"
 serde         = { version = "1", features = ["derive"] }
 serde_json    = "1"

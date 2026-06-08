@@ -1,12 +1,9 @@
 "use strict";
-/**
- * AIOSchema v0.5.5 — Node.js Reference Implementation
- * =====================================================
- * Pure CommonJS. Zero external dependencies.
- * Requires Node.js >= 18.
- *
- * Spec: https://aioschema.org
- */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/js v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
 
 const crypto = require("node:crypto");
 const fs     = require("node:fs");
@@ -14,10 +11,12 @@ const path   = require("node:path");
 
 // ── Spec constants ────────────────────────────────────────────────────────────
 
-const SPEC_VERSION = "0.5.5";
+const SPEC_VERSION = "0.5.6";
+
+const MAX_EXTENSION_SIZE_BYTES = 4096; // §6.3
 
 const SUPPORTED_VERSIONS = new Set([
-  "0.1", "0.2", "0.3", "0.3.1", "0.4", "0.5", "0.5.1", "0.5.5",
+  "0.1", "0.2", "0.3", "0.3.1", "0.4", "0.5", "0.5.1", "0.5.5", "0.5.6",
 ]);
 
 const CORE_HASH_FIELDS = [
@@ -273,7 +272,7 @@ class Manifest {
 // ── Generate manifest ─────────────────────────────────────────────────────────
 
 /**
- * Generate an AIOSchema v0.5.5 manifest.
+ * Generate an AIOSchema v0.5.6 manifest.
  *
  * @param {string} filePath  — path to the asset file
  * @param {object} [opts]
@@ -363,7 +362,7 @@ function generateManifest(filePath, opts = {}) {
 
   // Extensions
   const ext = {
-    software:         "AIOSchema-JS-Ref-v0.5.5",
+    software:         "AIOSchema-JS-Ref-v0.5.6",
     compliance_level: opts.privateKey != null ? 2 : 1,
     ...(opts.extensions ?? {}),
   };
@@ -426,6 +425,57 @@ async function verifyManifest(assetOrPath, manifest, opts = {}) {
     opts.softBindingThreshold ?? SOFT_BINDING_THRESHOLD_DEFAULT,
     SOFT_BINDING_THRESHOLD_MAX
   );
+
+  // §6.3 — Extension size limit
+  if (ext && Object.keys(ext).length > 0) {
+    const extSize = Buffer.byteLength(JSON.stringify(ext), "utf-8");
+    if (extSize > MAX_EXTENSION_SIZE_BYTES) {
+      return fail(`Extensions size (${extSize} bytes) exceeds limit of ${MAX_EXTENSION_SIZE_BYTES} bytes (§6.3)`);
+    }
+  }
+
+  // §11.1 — ai_declaration constraint validation
+  const aiDecl = ext?.ai_declaration;
+  if (aiDecl && typeof aiDecl === "object") {
+    if (aiDecl.standard_editing === true && aiDecl.disclosure_required === true) {
+      return fail(
+        "ai_declaration constraint violation: standard_editing is true but " +
+        "disclosure_required is also true. Per Article 50.2, standard editing " +
+        "does not trigger AI disclosure obligations."
+      );
+    }
+    if (aiDecl.human_reviewed === true && !ext?.["compliance_eu_art50"]) {
+      warns.push(
+        "ai_declaration.human_reviewed is true but compliance_eu_art50 " +
+        "extension is absent (SHOULD be present per §11.1)"
+      );
+    }
+  }
+
+  // §11.3 — public_key fingerprint cross-check
+  let embeddedPublicKey = null;
+  const pkB64 = ext?.public_key;
+  if (pkB64 && typeof pkB64 === "string") {
+    try {
+      const pkBytes = Buffer.from(pkB64, "base64");
+      if (pkBytes.length !== 32) {
+        return fail(`extensions.public_key decoded to ${pkBytes.length} bytes, expected 32 (Ed25519)`);
+      }
+      const fpHex = crypto.createHash("sha256").update(pkBytes).digest("hex").slice(0, 32);
+      const expectedCreatorId = `ed25519-fp-${fpHex}`;
+      if (!safeEqual(core.creator_id, expectedCreatorId)) {
+        return fail(
+          "extensions.public_key fingerprint cross-check failed: " +
+          "embedded key does not belong to declared creator_id. " +
+          `Expected ed25519-fp derived from key: ${expectedCreatorId}, ` +
+          `manifest creator_id: ${core.creator_id}`
+        );
+      }
+      embeddedPublicKey = pkBytes;
+    } catch {
+      return fail("extensions.public_key is not valid Base64");
+    }
+  }
 
   // §10 Step 1 — Schema version
   if (!SUPPORTED_VERSIONS.has(core.schema_version)) {
@@ -509,10 +559,11 @@ async function verifyManifest(assetOrPath, manifest, opts = {}) {
     if (!SIG_PATTERN.test(core.signature)) {
       return { ...fail("signature has invalid format; expected ed25519-<128hex>"), match_type: matchType };
     }
-    if (!opts.publicKey) {
-      return { ...fail("manifest is signed but no public key was provided"), match_type: matchType };
+    const verifyKey = opts.publicKey ?? embeddedPublicKey;
+    if (!verifyKey) {
+      return { ...fail("manifest is signed but no public key was provided (neither externally nor via extensions.public_key)"), match_type: matchType };
     }
-    if (!verifyEd25519(cfBytes, core.signature, opts.publicKey)) {
+    if (!verifyEd25519(cfBytes, core.signature, verifyKey)) {
       return { ...fail("core signature verification failed: invalid signature or wrong key"), match_type: matchType };
     }
     signatureVerified = true;
@@ -524,11 +575,12 @@ async function verifyManifest(assetOrPath, manifest, opts = {}) {
     if (!SIG_PATTERN.test(core.manifest_signature)) {
       return { ...fail("manifest_signature has invalid format; expected ed25519-<128hex>"), match_type: matchType };
     }
-    if (!opts.publicKey) {
-      return { ...fail("manifest_signature present but no public key was provided"), match_type: matchType };
+    const verifyKey = opts.publicKey ?? embeddedPublicKey;
+    if (!verifyKey) {
+      return { ...fail("manifest_signature present but no public key was provided (neither externally nor via extensions.public_key)"), match_type: matchType };
     }
     const mBytes = canonicalManifestBytes(mObj);
-    if (!verifyEd25519(mBytes, core.manifest_signature, opts.publicKey)) {
+    if (!verifyEd25519(mBytes, core.manifest_signature, verifyKey)) {
       return { ...fail("manifest signature verification failed: invalid or extensions tampered"), match_type: matchType };
     }
     manifestSigVerified = true;
@@ -591,7 +643,7 @@ async function verifyManifest(assetOrPath, manifest, opts = {}) {
  * In this reference implementation, network calls are not made by default.
  * Pass tsa_url to actually submit (requires network access).
  */
-async function anchorRfc3161(coreFingerprint, tsaUrl = "https://freetsa.org/tsr", outPath = null) {
+async function anchorRfc3161(coreFingerprint, tsaUrl = "https://rfc3161.ai.moda", outPath = null) {
   const [, hashHex] = coreFingerprint.split("-").slice(0, 1).concat(coreFingerprint.slice(coreFingerprint.indexOf("-") + 1));
   // Return stub — actual TSA submission requires http(s) client
   return {
@@ -697,6 +749,7 @@ module.exports = {
   // Constants
   SPEC_VERSION,
   SUPPORTED_VERSIONS,
+  MAX_EXTENSION_SIZE_BYTES,
   CORE_HASH_FIELDS,
   DEFAULT_HASH_ALG,
   SOFT_BINDING_THRESHOLD_DEFAULT,
@@ -711,3 +764,4 @@ module.exports = {
   CREATOR_ATTR,
   UUID_PATTERN,
 };
+// -- end aioschema/js v0.5.6 | AIOSchema spec v0.5.6 --

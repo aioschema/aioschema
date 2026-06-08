@@ -1,4 +1,9 @@
-/** AIOSchema v0.5.5 — Algorithms */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/typescript v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
+
 import * as C from "crypto";
 import { HASH_ALGORITHMS } from "./types";
 
@@ -58,3 +63,4 @@ export function pHashSimilarity(a: string, b: string): number {
 
 export const SOFT_BINDING_THRESHOLD_DEFAULT = 0.95;
 export const SOFT_BINDING_THRESHOLD_MAX     = 0.99;
+// -- end aioschema/typescript v0.5.6 | AIOSchema spec v0.5.6 --

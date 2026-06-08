@@ -1,11 +1,8 @@
-/**
- * AIOSchema v0.5.5 — Cross-verification runner (TypeScript side)
- *
- * Reads vectors.json produced by cross_verify_python.py and verifies each
- * vector against the TypeScript implementation. Any divergence is a failure.
- *
- * Run: node dist/test/cross_verify.js
- */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/typescript v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
 
 import * as fs   from "fs";
 import * as path from "path";
@@ -39,7 +36,7 @@ const vectorsPath = process.env.AIOSCHEMA_VECTORS
   || path.join(__dirname, '../../conformance/cross_verify_vectors.json');
 const vectors = JSON.parse(fs.readFileSync(vectorsPath, "utf8"));
 
-console.log(`\n=== AIOSchema v0.5.5 Cross-Verification: TypeScript side ===`);
+console.log(`\n=== AIOSchema v0.5.6 Cross-Verification: TypeScript side ===`);
 console.log(`    Vectors file: ${vectorsPath}`);
 console.log(`    Spec version: ${vectors.spec_version}`);
 console.log(`    Vectors: ${vectors.vectors.length}\n`);
@@ -131,9 +128,9 @@ console.log(`    Vectors: ${vectors.vectors.length}\n`);
   const canon = canonicalJson({
     creator_id: "urn:uuid:test",
     asset_id: "urn:uuid:asset",
-    schema_version: "0.5.5",
+    schema_version: "0.5.6",
   }).toString("utf8");
-  const canonExpected = '{"asset_id":"urn:uuid:asset","creator_id":"urn:uuid:test","schema_version":"0.5.5"}';
+  const canonExpected = '{"asset_id":"urn:uuid:asset","creator_id":"urn:uuid:test","schema_version":"0.5.6"}';
   check("XC-04", "Canonical JSON key order matches Python output", canon === canonExpected,
         `got ${canon}`);
 
@@ -146,7 +143,7 @@ console.log(`    Vectors: ${vectors.vectors.length}\n`);
   const fixedTs = "2026-02-22T12:00:00Z";
   const coreForFp: Record<string, unknown> = {
     asset_id: fixedAssetId,
-    schema_version: "0.5.5",
+    schema_version: "0.5.6",
     creation_timestamp: fixedTs,
     hash_original: assetSha256,
     creator_id: fixedCreatorId,
@@ -156,7 +153,7 @@ console.log(`    Vectors: ${vectors.vectors.length}\n`);
   const fixedManifest: Manifest = {
     core: {
       asset_id: fixedAssetId,
-      schema_version: "0.5.5",
+      schema_version: "0.5.6",
       creation_timestamp: fixedTs,
       hash_original: assetSha256,
       creator_id: fixedCreatorId,
@@ -198,7 +195,7 @@ console.log(`    Vectors: ${vectors.vectors.length}\n`);
   const aliasManifest: Manifest = {
     core: {
       asset_id: fixedAssetId,
-      schema_version: "0.5.5",
+      schema_version: "0.5.6",
       creation_timestamp: fixedTs,
       hash_original: assetSha256,
       creator_id: fixedCreatorId,
@@ -242,3 +239,4 @@ console.log(`    Vectors: ${vectors.vectors.length}\n`);
     process.exit(0);
   }
 })();
+// -- end aioschema/typescript v0.5.6 | AIOSchema spec v0.5.6 --

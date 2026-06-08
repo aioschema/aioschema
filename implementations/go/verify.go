@@ -1,7 +1,16 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/go v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
+
 package aioschema
 
 import (
 	"crypto/ed25519"
+	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -12,6 +21,13 @@ import (
 var uuidPattern = regexp.MustCompile(
 	`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`,
 )
+
+func toBool(v interface{}) bool {
+	if b, ok := v.(bool); ok {
+		return b
+	}
+	return false
+}
 
 // VerifyManifest executes the AIOSchema §10 verification procedure.
 //
@@ -32,10 +48,68 @@ func VerifyManifest(assetData []byte, m *Manifest, opts VerifyOptions) (*Verific
 
 	core := &m.Core
 
+	// §6.3 — Extension size limit
+	if m.Extensions != nil {
+		extJSON, err := json.Marshal(m.Extensions)
+		if err == nil && len(extJSON) > MaxExtensionSizeBytes {
+			return fail(fmt.Sprintf(
+				"extensions size (%d bytes) exceeds limit of %d bytes (§6.3)",
+				len(extJSON), MaxExtensionSizeBytes,
+			)), nil
+		}
+	}
+
+	// §11.1 — ai_declaration constraint validation
+	if aiDecl, ok := m.Extensions["ai_declaration"]; ok {
+		if decl, ok := aiDecl.(map[string]interface{}); ok {
+			if toBool(decl["standard_editing"]) && toBool(decl["disclosure_required"]) {
+				return fail(
+					"ai_declaration constraint violation: standard_editing is true but " +
+						"disclosure_required is also true. Per Article 50.2, standard editing " +
+						"does not trigger AI disclosure obligations.",
+				), nil
+			}
+			if toBool(decl["human_reviewed"]) {
+				if _, hasArt50 := m.Extensions["compliance_eu_art50"]; !hasArt50 {
+					warns = append(warns,
+						"ai_declaration.human_reviewed is true but compliance_eu_art50 "+
+							"extension is absent (SHOULD be present per §11.1)")
+				}
+			}
+		}
+	}
+
+	// §11.3 — public_key fingerprint cross-check
+	var embeddedPublicKey []byte
+	if pkB64, ok := m.Extensions["public_key"].(string); ok && pkB64 != "" {
+		pkBytes, err := base64.StdEncoding.DecodeString(pkB64)
+		if err != nil {
+			return fail("extensions.public_key is not valid Base64"), nil
+		}
+		if len(pkBytes) != 32 {
+			return fail(fmt.Sprintf(
+				"extensions.public_key decoded to %d bytes, expected 32 (Ed25519)",
+				len(pkBytes),
+			)), nil
+		}
+		// Fingerprint cross-check
+		fpHash := sha256.Sum256(pkBytes)
+		fpHex := hex.EncodeToString(fpHash[:16])
+		expectedCreatorID := "ed25519-fp-" + fpHex
+		if subtle.ConstantTimeCompare([]byte(core.CreatorID), []byte(expectedCreatorID)) != 1 {
+			return fail(
+				"extensions.public_key fingerprint cross-check failed: "+
+					"embedded key does not belong to declared creator_id. "+
+					fmt.Sprintf("Expected ed25519-fp derived from key: %s, manifest creator_id: %s", expectedCreatorID, core.CreatorID),
+			), nil
+		}
+		embeddedPublicKey = pkBytes
+	}
+
 	// §10 Step 1 — Schema version check
 	if !SupportedVersions[core.SchemaVersion] {
 		return fail(fmt.Sprintf(
-			"unsupported schema_version %q; supported: 0.1 0.2 0.3 0.3.1 0.4 0.5 0.5.1 0.5.5",
+			"unsupported schema_version %q; supported: 0.1 0.2 0.3 0.3.1 0.4 0.5 0.5.1 0.5.5 0.5.6",
 			core.SchemaVersion,
 		)), nil
 	}
@@ -168,7 +242,7 @@ func VerifyManifest(assetData []byte, m *Manifest, opts VerifyOptions) (*Verific
 		}, nil
 	}
 
-	// §10 Step 11 — Core signature verification
+	// §10 Step 11 — Core signature verification (§11.3: prefer embedded key)
 	signatureVerified := false
 	if core.Signature != nil {
 		sigStr := *core.Signature
@@ -179,22 +253,28 @@ func VerifyManifest(assetData []byte, m *Manifest, opts VerifyOptions) (*Verific
 				MatchType: matchType,
 			}, nil
 		}
-		if opts.PublicKeyHex == "" {
+		// Resolve verification key: external > embedded > error
+		var verifyKey []byte
+		if opts.PublicKeyHex != "" {
+			var err error
+			verifyKey, err = hex.DecodeString(opts.PublicKeyHex)
+			if err != nil {
+				return nil, fmt.Errorf("decode public key hex: %w", err)
+			}
+		} else if embeddedPublicKey != nil {
+			verifyKey = embeddedPublicKey
+		} else {
 			return &VerificationResult{
 				Success:   false,
-				Message:   "manifest is signed but no public key was provided",
+				Message:   "manifest is signed but no public key was provided (neither externally nor via extensions.public_key)",
 				MatchType: matchType,
 			}, nil
-		}
-		pubKeyBytes, err := hex.DecodeString(opts.PublicKeyHex)
-		if err != nil {
-			return nil, fmt.Errorf("decode public key hex: %w", err)
 		}
 		sigBytes, err := hex.DecodeString(sigStr[len("ed25519-"):])
 		if err != nil {
 			return nil, fmt.Errorf("decode signature hex: %w", err)
 		}
-		pubKey := ed25519.PublicKey(pubKeyBytes)
+		pubKey := ed25519.PublicKey(verifyKey)
 		if !ed25519.Verify(pubKey, coreFieldBytes, sigBytes) {
 			return &VerificationResult{
 				Success:   false,
@@ -205,7 +285,7 @@ func VerifyManifest(assetData []byte, m *Manifest, opts VerifyOptions) (*Verific
 		signatureVerified = true
 	}
 
-	// §10 Step 12 — Manifest signature verification
+	// §10 Step 12 — Manifest signature verification (§11.3: prefer embedded key)
 	manifestSigVerified := false
 	if core.ManifestSignature != nil {
 		msigStr := *core.ManifestSignature
@@ -216,14 +296,23 @@ func VerifyManifest(assetData []byte, m *Manifest, opts VerifyOptions) (*Verific
 				MatchType: matchType,
 			}, nil
 		}
-		if opts.PublicKeyHex == "" {
+		// Resolve verification key: external > embedded > error
+		var verifyKey []byte
+		if opts.PublicKeyHex != "" {
+			var err error
+			verifyKey, err = hex.DecodeString(opts.PublicKeyHex)
+			if err != nil {
+				return nil, fmt.Errorf("decode public key hex: %w", err)
+			}
+		} else if embeddedPublicKey != nil {
+			verifyKey = embeddedPublicKey
+		} else {
 			return &VerificationResult{
 				Success:   false,
-				Message:   "manifest_signature present but no public key was provided",
+				Message:   "manifest_signature present but no public key was provided (neither externally nor via extensions.public_key)",
 				MatchType: matchType,
 			}, nil
 		}
-		pubKeyBytes, err := hex.DecodeString(opts.PublicKeyHex)
 		if err != nil {
 			return nil, fmt.Errorf("decode public key hex: %w", err)
 		}
@@ -242,7 +331,7 @@ func VerifyManifest(assetData []byte, m *Manifest, opts VerifyOptions) (*Verific
 			return nil, fmt.Errorf("canonical manifest bytes: %w", err)
 		}
 
-		pubKey := ed25519.PublicKey(pubKeyBytes)
+		pubKey := ed25519.PublicKey(verifyKey)
 		if !ed25519.Verify(pubKey, mBytes, msigBytes) {
 			return &VerificationResult{
 				Success:   false,
@@ -335,15 +424,5 @@ func manifestCoreToMap(c *Core) (map[string]interface{}, error) {
 	return m, nil
 }
 
-// manifestToMap converts a full Manifest to map[string]interface{} via JSON round-trip.
-func manifestToMap(m *Manifest) (map[string]interface{}, error) {
-	data, err := json.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-	var result map[string]interface{}
-	if err := json.Unmarshal(data, &result); err != nil {
-		return nil, err
-	}
-	return result, nil
-}
+// manifestToMap is in manifest.go
+// -- end aioschema/go v0.5.6 | AIOSchema spec v0.5.6 --

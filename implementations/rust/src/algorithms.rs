@@ -1,4 +1,8 @@
-//! Hash computation, canonical JSON, and regex patterns for AIOSchema v0.5.5.
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/rust v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
 
 use crate::types::{AiosError, CORE_HASH_FIELDS};
 use once_cell::sync::Lazy;
@@ -154,3 +158,4 @@ pub fn safe_equal(a: &str, b: &str) -> bool {
     }
     diff == 0
 }
+// -- end aioschema/rust v0.5.6 | AIOSchema spec v0.5.6 --

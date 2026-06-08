@@ -1,3 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/go v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
+
 package aioschema
 
 import (
@@ -143,3 +149,4 @@ func canonicalManifestBytes(m map[string]interface{}) ([]byte, error) {
 	}
 	return CanonicalJSON(copy_)
 }
+// -- end aioschema/go v0.5.6 | AIOSchema spec v0.5.6 --

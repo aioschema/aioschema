@@ -1,0 +1,39 @@
+{
+  "id": "TV-17",
+  "level": 3,
+  "category": "anchor",
+  "description": "Level 3 manifest with anchor_reference present. Anchor record is provided matching asset_id and core_fingerprint. anchor_verified must be true.",
+  "input": {
+    "manifest": {
+      "core": {
+        "asset_id": "019c7cb0-6e40-7f21-873b-9a9cf13e461b",
+        "schema_version": "0.5.6",
+        "creation_timestamp": "2026-05-10T12:00:00Z",
+        "hash_original": "sha256-45880b5668c1271d3546dc2f8ec4d8bed1fbf9deb986b76da73b1ea459a6d492",
+        "creator_id": "ed25519-fp-dbc7a2d5167e1f5e0ea2b0f1e5efcd5d",
+        "signature": "ed25519-7270108b7cd5dd8c816dc3fbbc19bec33aa91798920c0b010ca7c9a675b92a5702a1a96282ec5bf82dcd8fea8a0be990ff1854667f58dba7d5218de6ef1c3802",
+        "manifest_signature": "ed25519-b71a6a3d548c8efc1f6d0f297b4ba70ad015b61051043300d7221888b3f397c6af2722bcbf244a0a59f9b4fa2dd3b9f12321710010e3c9d5e2e56683f4747e07",
+        "anchor_reference": "aios-anchor:rfc3161-sectigo:abc123def456xyz789",
+        "previous_version_anchor": null,
+        "core_fingerprint": "sha256-199fb6c8cde0284bcc700be183432f9ac90d490d6462c9a48ace69140d7fc5b1"
+      }
+    },
+    "asset_data_hex": "41494f536368656d6120746573742061737365742076302e352e36202d2063616e6f6e6963616c207265666572656e636520636f6e74656e7420666f7220636f6e666f726d616e63652074657374696e672e",
+    "public_key_b64": "BV4rdH6q0nWibBuCoOGNw058dPkv/IAPmPW1YK4pMOs=",
+    "verify_anchor": true,
+    "anchor_record": {
+      "asset_id": "019c7cb0-6e40-7f21-873b-9a9cf13e461b",
+      "core_fingerprint": "sha256-199fb6c8cde0284bcc700be183432f9ac90d490d6462c9a48ace69140d7fc5b1",
+      "timestamp": "2026-05-10T12:05:00Z",
+      "service": "rfc3161-sectigo"
+    }
+  },
+  "expected": {
+    "success": true,
+    "match_type": "hard",
+    "signature_verified": true,
+    "manifest_signature_verified": true,
+    "anchor_checked": true,
+    "anchor_verified": true
+  }
+}

@@ -1,6 +1,8 @@
-/**
- * AIOSchema v0.5.5 — RFC 3161 anchor support (§9, §18.5)
- */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/typescript v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
 
 import * as http  from "http";
 import * as https from "https";
@@ -19,7 +21,7 @@ export interface RFC3161Result {
 
 export async function anchorRfc3161(
   coreFingerprint: string,
-  tsaUrl  = "https://freetsa.org/tsr",
+  tsaUrl  = "https://rfc3161.ai.moda",
   outPath?: string
 ): Promise<RFC3161Result> {
   const hashHex  = coreFingerprint.slice(coreFingerprint.indexOf("-") + 1);
@@ -89,3 +91,4 @@ function httpPost(url: string, body: Buffer): Promise<Buffer> {
     req.end();
   });
 }
+// -- end aioschema/typescript v0.5.6 | AIOSchema spec v0.5.6 --

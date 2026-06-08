@@ -1,6 +1,10 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+<!-- Copyright 2026 Ovidiu Ancuta -->
+<!-- AIOSchema v0.5.5 | spec/README-v0.5.5.md | https://aioschema.org -->
+
 # AIOSchema Specification
 
-AIOSchema is an open standard for cryptographic content provenance and digital authenticity — for both digital and physical assets. It defines a minimal, verifiable manifest format that establishes what an asset is, who created it, and when it existed, independently of any platform, storage system, or proprietary tool.
+AIOSchema is an open standard for cryptographic content provenance and digital authenticity, for both digital and physical assets. It defines a minimal, verifiable manifest format that establishes what an asset is, who created it, and when it existed, independently of any platform, storage system, or proprietary tool.
 
 **Version:** 0.5.5 — Technical Review
 **Author:** Ovidiu Ancuta
@@ -18,7 +22,7 @@ AIOSchema is an open standard for cryptographic content provenance and digital a
 - Verification procedure (10-step normative process)
 - Anchoring mechanism and anchor resolver contract
 - Extension block and soft binding
-- Interoperability mappings — C2PA, EXIF/XMP, schema.org, W3C PROV
+- Interoperability mappings: C2PA, EXIF/XMP, schema.org, W3C PROV
 - Security, privacy, and abuse resistance properties
 - Governance model
 - Mechanism registries
@@ -59,3 +63,5 @@ The founding provenance record for this specification is published at https://ai
 
 - **Specification:** CC-BY 4.0 — https://creativecommons.org/licenses/by/4.0/
 - **Reference Implementations:** Apache License 2.0 — https://www.apache.org/licenses/LICENSE-2.0
+
+<!-- end AIOSchema v0.5.5 | spec/README-v0.5.5.md | https://aioschema.org -->

@@ -1,10 +1,16 @@
-/** AIOSchema v0.5.5 — Types */
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/typescript v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
 
-export const SPEC_VERSION = "0.5.5";
+export const SPEC_VERSION = "0.5.6";
 
 export const SUPPORTED_VERSIONS: ReadonlySet<string> = new Set([
-  "0.1","0.2","0.3","0.3.1","0.4","0.5","0.5.1","0.5.5"
+  "0.1","0.2","0.3","0.3.1","0.4","0.5","0.5.1","0.5.5","0.5.6"
 ]);
+
+export const MAX_EXTENSION_SIZE_BYTES = 4096; // §6.3
 
 export const HASH_ALGORITHMS: ReadonlyMap<string, number> = new Map([
   ["sha256",64],["sha3-256",64],["sha384",96]
@@ -82,3 +88,4 @@ export interface VerifyOptions {
   publicKey?:       Uint8Array;
   softThreshold?:   number;
 }
+// -- end aioschema/typescript v0.5.6 | AIOSchema spec v0.5.6 --

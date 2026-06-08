@@ -1,4 +1,8 @@
-//! AIOSchema §10 verification procedure.
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 Ovidiu Ancuta
+//
+// aioschema/rust v0.5.6 | AIOSchema spec v0.5.6
+// https://aioschema.org
 
 use crate::algorithms::{
     canonical_core_fields, canonical_manifest_bytes, compute_hash,
@@ -8,15 +12,14 @@ use crate::algorithms::{
 use crate::types::{
     AiosError, MatchType, VerificationResult, VerifyOptions, Manifest,
     SOFT_BINDING_THRESHOLD_DEFAULT, SOFT_BINDING_THRESHOLD_MAX, SUPPORTED_VERSIONS,
+    MAX_EXTENSION_SIZE_BYTES,
 };
 use ed25519_dalek::{Signature, VerifyingKey};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 
 /// Execute the AIOSchema §10 verification procedure.
-///
-/// `asset_data` — raw bytes of the asset being verified.  
-/// `manifest`   — parsed `Manifest`.  
-/// `opts`       — optional parameters (public key, thresholds, anchor resolver).
 pub fn verify_manifest(
     asset_data: &[u8],
     manifest: &Manifest,
@@ -24,13 +27,119 @@ pub fn verify_manifest(
 ) -> Result<VerificationResult, AiosError> {
     let mut warns: Vec<String> = Vec::new();
 
-    // Resolve soft binding threshold
     let threshold = opts
         .soft_binding_threshold
         .unwrap_or(SOFT_BINDING_THRESHOLD_DEFAULT)
         .min(SOFT_BINDING_THRESHOLD_MAX);
 
     let core = &manifest.core;
+    let ext = &manifest.extensions;
+
+    // §6.3 — Extension size limit
+    if !ext.is_empty() {
+        let ext_json = serde_json::to_vec(ext)
+            .map_err(|e| AiosError::Other(e.to_string()))?;
+        if ext_json.len() > MAX_EXTENSION_SIZE_BYTES {
+            return Ok(VerificationResult {
+                success: false,
+                message: format!(
+                    "extensions size ({} bytes) exceeds limit of {} bytes (§6.3)",
+                    ext_json.len(), MAX_EXTENSION_SIZE_BYTES
+                ),
+                match_type: None,
+                signature_verified: false,
+                manifest_signature_verified: false,
+                anchor_checked: false,
+                anchor_verified: false,
+                warnings: warns,
+            });
+        }
+    }
+
+    // §11.1 — ai_declaration constraint validation
+    if !ext.is_empty() {
+        if let Some(ai_decl) = ext.get("ai_declaration") {
+            if let Some(decl) = ai_decl.as_object() {
+                let standard_editing = decl.get("standard_editing").and_then(|v| v.as_bool()).unwrap_or(false);
+                let disclosure_required = decl.get("disclosure_required").and_then(|v| v.as_bool()).unwrap_or(false);
+                if standard_editing && disclosure_required {
+                    return Ok(VerificationResult {
+                        success: false,
+                        message: "ai_declaration constraint violation: standard_editing is true but disclosure_required is also true. Per Article 50.2, standard editing does not trigger AI disclosure obligations.".to_string(),
+                        match_type: None,
+                        signature_verified: false,
+                        manifest_signature_verified: false,
+                        anchor_checked: false,
+                        anchor_verified: false,
+                        warnings: warns,
+                    });
+                }
+                let human_reviewed = decl.get("human_reviewed").and_then(|v| v.as_bool()).unwrap_or(false);
+                if human_reviewed {
+                    let has_art50 = ext.get("compliance_eu_art50").is_some();
+                    if !has_art50 {
+                        warns.push("ai_declaration.human_reviewed is true but compliance_eu_art50 extension is absent (SHOULD be present per §11.1)".to_string());
+                    }
+                }
+            }
+        }
+    }
+
+    // §11.3 — public_key fingerprint cross-check
+    let mut embedded_public_key: Option<Vec<u8>> = None;
+    if !ext.is_empty() {
+        if let Some(pk_b64) = ext.get("public_key").and_then(|v| v.as_str()) {
+            match BASE64.decode(pk_b64) {
+                Ok(pk_bytes) => {
+                    if pk_bytes.len() != 32 {
+                        return Ok(VerificationResult {
+                            success: false,
+                            message: format!("extensions.public_key decoded to {} bytes, expected 32 (Ed25519)", pk_bytes.len()),
+                            match_type: None,
+                            signature_verified: false,
+                            manifest_signature_verified: false,
+                            anchor_checked: false,
+                            anchor_verified: false,
+                            warnings: warns,
+                        });
+                    }
+                    let mut hasher = Sha256::new();
+                    hasher.update(&pk_bytes);
+                    let hash = hasher.finalize();
+                    let fp_hex = hex::encode(&hash[..16]);
+                    let expected_creator_id = format!("ed25519-fp-{}", fp_hex);
+                    if !safe_equal(&core.creator_id, &expected_creator_id) {
+                        return Ok(VerificationResult {
+                            success: false,
+                            message: format!(
+                                "extensions.public_key fingerprint cross-check failed: embedded key does not belong to declared creator_id. Expected ed25519-fp derived from key: {}, manifest creator_id: {}",
+                                expected_creator_id, core.creator_id
+                            ),
+                            match_type: None,
+                            signature_verified: false,
+                            manifest_signature_verified: false,
+                            anchor_checked: false,
+                            anchor_verified: false,
+                            warnings: warns,
+                        });
+                    }
+                    embedded_public_key = Some(pk_bytes);
+                }
+                Err(_) => {
+                    return Ok(VerificationResult {
+                        success: false,
+                        message: "extensions.public_key is not valid Base64".to_string(),
+                        match_type: None,
+                        signature_verified: false,
+                        manifest_signature_verified: false,
+                        anchor_checked: false,
+                        anchor_verified: false,
+                        warnings: warns,
+                    });
+                }
+            }
+        }
+    }
 
     // §10 Step 1 — Schema version
     if !SUPPORTED_VERSIONS.contains(&core.schema_version.as_str()) {
@@ -80,8 +189,7 @@ pub fn verify_manifest(
         }
     }
 
-    // §10 Step 6 — Build a serde_json Value for the core so we can pass it to
-    // `canonical_core_fields`. We serialize the Core struct and re-parse as Value.
+    // §10 Step 6
     let core_value: Value = serde_json::to_value(core)?;
 
     // §10 Step 7 — Content hash verification (hard match)
@@ -116,14 +224,13 @@ pub fn verify_manifest(
         ));
     }
 
-    // §10 Step 8 — Soft binding fallback (image processing not available)
+    // §10 Step 8 — Soft binding fallback
     let soft_match = false;
     if !hard_match {
         if manifest.extensions.contains_key("soft_binding") {
             warns.push(format!(
                 "soft_binding present but not evaluated \
-                 (image processing not available in this implementation; \
-                 policy threshold={threshold})"
+                 (image processing not available; threshold={threshold})"
             ));
         }
     }
@@ -142,10 +249,14 @@ pub fn verify_manifest(
         Some(v) => v,
         None => {
             return Ok(VerificationResult {
-                success:   false,
-                message:   "missing required field: core_fingerprint".to_string(),
+                success: false,
+                message: "missing required field: core_fingerprint".to_string(),
                 match_type: Some(match_type),
-                ..VerificationResult::fail("")
+                signature_verified: false,
+                manifest_signature_verified: false,
+                anchor_checked: false,
+                anchor_verified: false,
+                warnings: warns,
             });
         }
     };
@@ -154,10 +265,14 @@ pub fn verify_manifest(
         Ok(pair) => pair,
         Err(e) => {
             return Ok(VerificationResult {
-                success:    false,
-                message:    format!("core_fingerprint has invalid format: {e}"),
+                success: false,
+                message: format!("core_fingerprint has invalid format: {e}"),
                 match_type: Some(match_type),
-                ..VerificationResult::fail("")
+                signature_verified: false,
+                manifest_signature_verified: false,
+                anchor_checked: false,
+                anchor_verified: false,
+                warnings: warns,
             });
         }
     };
@@ -167,35 +282,51 @@ pub fn verify_manifest(
 
     if !safe_equal(&computed_cfp, cfp_val) {
         return Ok(VerificationResult {
-            success:    false,
-            message:    "manifest integrity check failed: core_fingerprint mismatch. \
+            success: false,
+            message: "manifest integrity check failed: core_fingerprint mismatch. \
                          Core metadata may have been tampered."
                 .to_string(),
             match_type: Some(match_type),
-            ..VerificationResult::fail("")
+            signature_verified: false,
+            manifest_signature_verified: false,
+            anchor_checked: false,
+            anchor_verified: false,
+            warnings: warns,
         });
     }
 
-    // §10 Step 11 — Core signature
+    // §10 Step 11 — Core signature verification (§11.3: prefer embedded key)
     let mut signature_verified = false;
     if let Some(sig_str) = &core.signature {
         if !SIGNATURE_PATTERN.is_match(sig_str) {
             return Ok(VerificationResult {
-                success:    false,
-                message:    "signature has invalid format; expected ed25519-<128hex>".to_string(),
+                success: false,
+                message: "signature has invalid format; expected ed25519-<128hex>".to_string(),
                 match_type: Some(match_type),
-                ..VerificationResult::fail("")
+                signature_verified: false,
+                manifest_signature_verified: false,
+                anchor_checked: false,
+                anchor_verified: false,
+                warnings: warns,
             });
         }
-        let pub_bytes = match opts.public_key {
+        // Resolve verification key: external > embedded > error
+        let pub_bytes: &[u8] = match opts.public_key {
             Some(b) => b,
-            None => {
-                return Ok(VerificationResult {
-                    success:    false,
-                    message:    "manifest is signed but no public key was provided".to_string(),
-                    match_type: Some(match_type),
-                    ..VerificationResult::fail("")
-                });
+            None => match &embedded_public_key {
+                Some(emb) => emb.as_slice(),
+                None => {
+                    return Ok(VerificationResult {
+                        success: false,
+                        message: "manifest is signed but no public key was provided (neither externally nor via extensions.public_key)".to_string(),
+                        match_type: Some(match_type),
+                        signature_verified: false,
+                        manifest_signature_verified: false,
+                        anchor_checked: false,
+                        anchor_verified: false,
+                        warnings: warns,
+                    });
+                }
             }
         };
         let vk = verifying_key(pub_bytes).map_err(|e| AiosError::Other(e.to_string()))?;
@@ -204,44 +335,58 @@ pub fn verify_manifest(
             Ok(()) => signature_verified = true,
             Err(_) => {
                 return Ok(VerificationResult {
-                    success:    false,
-                    message:    "core signature verification failed: invalid signature or wrong key"
+                    success: false,
+                    message: "core signature verification failed: invalid signature or wrong key"
                         .to_string(),
                     match_type: Some(match_type),
-                    ..VerificationResult::fail("")
+                    signature_verified: false,
+                    manifest_signature_verified: false,
+                    anchor_checked: false,
+                    anchor_verified: false,
+                    warnings: warns,
                 });
             }
         }
     }
 
-    // §10 Step 12 — Manifest signature
+    // §10 Step 12 — Manifest signature verification (§11.3: prefer embedded key)
     let mut manifest_sig_verified = false;
     if let Some(msig_str) = &core.manifest_signature {
         if !SIGNATURE_PATTERN.is_match(msig_str) {
             return Ok(VerificationResult {
-                success:    false,
-                message:    "manifest_signature has invalid format; expected ed25519-<128hex>"
+                success: false,
+                message: "manifest_signature has invalid format; expected ed25519-<128hex>"
                     .to_string(),
                 match_type: Some(match_type),
-                ..VerificationResult::fail("")
+                signature_verified: false,
+                manifest_signature_verified: false,
+                anchor_checked: false,
+                anchor_verified: false,
+                warnings: warns,
             });
         }
-        let pub_bytes = match opts.public_key {
+        // Resolve verification key: external > embedded > error
+        let pub_bytes: &[u8] = match opts.public_key {
             Some(b) => b,
-            None => {
-                return Ok(VerificationResult {
-                    success:    false,
-                    message:    "manifest_signature present but no public key was provided"
-                        .to_string(),
-                    match_type: Some(match_type),
-                    ..VerificationResult::fail("")
-                });
+            None => match &embedded_public_key {
+                Some(emb) => emb.as_slice(),
+                None => {
+                    return Ok(VerificationResult {
+                        success: false,
+                        message: "manifest_signature present but no public key was provided (neither externally nor via extensions.public_key)".to_string(),
+                        match_type: Some(match_type),
+                        signature_verified: false,
+                        manifest_signature_verified: false,
+                        anchor_checked: false,
+                        anchor_verified: false,
+                        warnings: warns,
+                    });
+                }
             }
         };
         let vk = verifying_key(pub_bytes).map_err(|e| AiosError::Other(e.to_string()))?;
         let sig = parse_ed25519_sig(&msig_str["ed25519-".len()..])?;
 
-        // Serialize full manifest with manifest_signature nulled (§5.8)
         let manifest_value: Value = serde_json::to_value(manifest)?;
         let m_bytes = canonical_manifest_bytes(&manifest_value)?;
 
@@ -249,12 +394,15 @@ pub fn verify_manifest(
             Ok(()) => manifest_sig_verified = true,
             Err(_) => {
                 return Ok(VerificationResult {
-                    success:    false,
-                    message:    "manifest signature verification failed: \
-                                 invalid or extensions tampered"
+                    success: false,
+                    message: "manifest signature verification failed: invalid or extensions tampered"
                         .to_string(),
                     match_type: Some(match_type),
-                    ..VerificationResult::fail("")
+                    signature_verified: false,
+                    manifest_signature_verified: false,
+                    anchor_checked: false,
+                    anchor_verified: false,
+                    warnings: warns,
                 });
             }
         }
@@ -278,14 +426,12 @@ pub fn verify_manifest(
                         }
                         Ok(Some(record)) => {
                             let id_match = safe_equal(&record.asset_id, &core.asset_id);
-                            let cfp_match =
-                                safe_equal(&record.core_fingerprint, cfp_val);
+                            let cfp_match = safe_equal(&record.core_fingerprint, cfp_val);
                             if id_match && cfp_match {
                                 anchor_verified = true;
                             } else {
                                 warns.push(format!(
-                                    "anchor record mismatch for {anchor:?}. \
-                                     Asset may have been re-signed."
+                                    "anchor record mismatch for {anchor:?}. Asset may have been re-signed."
                                 ));
                             }
                         }
@@ -338,3 +484,4 @@ fn parse_ed25519_sig(hex_str: &str) -> Result<Signature, AiosError> {
         .map_err(|_| AiosError::Other("ed25519 signature must be 64 bytes".to_string()))?;
     Ok(Signature::from_bytes(&arr))
 }
+// -- end aioschema/rust v0.5.6 | AIOSchema spec v0.5.6 --
