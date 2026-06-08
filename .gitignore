@@ -90,4 +90,3 @@ Thumbs.db
 # Build artifacts — never commit
 # -----------------------------------------------------------------------
 _rustc_info.json
-*.aios.json
