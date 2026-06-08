@@ -2,19 +2,6 @@
 # Generated at repo finalization after all implementations committed.
 # Covers: Ruby, JavaScript/Node.js, Go, Rust, TypeScript, Python, .NET
 
-# -----------------------------------------------------------------------
-# Ruby / Jekyll
-# -----------------------------------------------------------------------
-*.gem
-*.rbc
-/.bundle
-/vendor/bundle
-/log
-/tmp
-_site/
-.jekyll-cache/
-.jekyll-metadata
-Gemfile.lock
 
 # -----------------------------------------------------------------------
 # JavaScript / Node.js
