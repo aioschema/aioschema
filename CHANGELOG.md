@@ -59,17 +59,15 @@ Inline per-file changelog blocks removed; history lives in CHANGELOG.md only.
 
 | Implementation | Path | Key changes |
 |---|---|---|
-| Jekyll plugin (Ruby) | `jekyll-aioschema/` | `compliance_eu_art50` two-field struct; `sidecar_valid?` SPEC_VERSION guard; `anchor_reference` array guard; bumped v1.4.8 |
 | JS/Node.js | `implementations/js/` | `compliance_eu_art50`; default TSA `rfc3161.ai.moda`; TV-25 wired |
 | Go | `implementations/go/` | `compliance_eu_art50`; TV-25 (`TestTV25_ComplianceEuArt50`); README and LICENSE added |
 | Rust | `implementations/rust/` | `compliance_eu_art50`; TV-25 (`tv25_compliance_eu_art50`); README and LICENSE added |
 | TypeScript | `implementations/typescript/` | `compliance_eu_art50`; default TSA `rfc3161.ai.moda`; TV-25 wired; README and LICENSE added |
 | Python | `implementations/python/` | `compliance_eu_art50`; default TSA `rfc3161.ai.moda`; TV-25 (`TestTV25ComplianceEuArt50`); README and LICENSE added |
-| .NET (C#) | `implementations/dotnet/` | Zero-dependency (BouncyCastle batch superseded); `SpecVersion` `"0.5.6"`; TV-25 (`RunTV25()`); README added |
+| .NET (C#) | `implementations/dotnet/` | Zero-dependency; `SpecVersion` `"0.5.6"`; TV-25 (`RunTV25()`); README added |
 
 ### Tools
 
-- Provenance Studio v24.8 (`tools/provenance-studio/`)
 - CLI v0.5.14 (`tools/cli/`)
 
 ### Repo hygiene
@@ -79,7 +77,7 @@ Inline per-file changelog blocks removed; history lives in CHANGELOG.md only.
 - `Cargo.lock`, `go.mod`: no header or footer
 - `test_tv19_debug.ts` excluded from the repo (development scratch file)
 - `_rustc_info.json` excluded via `.gitignore` (build artifact)
-- `.gitignore` written at repo root covering all seven languages
+- `.gitignore` written at repo root covering all anguages
 
 ---
 
