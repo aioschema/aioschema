@@ -1,0 +1,34 @@
+{
+  "core": {
+    "asset_id": "019ea9dd-6c9e-779d-b262-b8aa95f73ce1",
+    "schema_version": "0.5.6",
+    "creation_timestamp": "2026-06-09T00:52:01Z",
+    "hash_original": "sha256-b7c7dd35effe2d25e80edd6a8281081f8fb5797419755d82b588e82f2c9ee691",
+    "creator_id": "ed25519-fp-ebc64203390ddefc442ade9038e1ae18",
+    "core_fingerprint": "sha256-6d0cd8460df512ccdac7e0f380ee869b5a6a4b822195282a96d35010cf0285cd",
+    "signature": "ed25519-4650d4ab6ba9dd2fae389d9424eef0e0f33cc651cf91abf7e67029ec98b5c01750ab8671267026a47ca055652e8d1ce0588cea37d0927c9a7c55f611eb4c490e",
+    "manifest_signature": "ed25519-4eb339c11c48185f1aea1ad1c96234b67b9dd7d65954296f48ad5b41bba84e3fa01caa8fd60748e1b8ae1eb4c6d966323f25db85c6cfa4fdb7313bb774e1a80a",
+    "anchor_reference": "aios-anchor:rfc3161-freetsa:b7c7dd35effe2d25e80edd6a8281081f8fb5797419755d82b588e82f2c9ee691",
+    "previous_version_anchor": null
+  },
+  "extensions": {
+    "asset_name": "2026-06-03-as-pos-art50-001.md",
+    "description": "This position paper is submitted for consideration by the AI Office Working Group 1 (Provider Obligations) and Working Group 2 (Deployer Obligations) as part of the Code of Practice on Marking and Labelling of AI-Generated Content & Article 50(7) EU AI Act",
+    "ai_declaration": {
+      "disclosure_required": false,
+      "ai_generated": false,
+      "ai_manipulated": false,
+      "human_reviewed": true,
+      "standard_editing": false,
+      "creative_work": false
+    },
+    "compliance": {
+      "eu_art50": {
+        "editorial_responsibility": "Ovidiu Ancuta, AIOSchema Project",
+        "review_type": "substantive"
+      }
+    },
+    "public_key": "Fi00S1HLbSi+eXOLuFDByIBNW9vOBbTZ3nsYbISeBlY=",
+    "compliance_level": 3
+  }
+}
