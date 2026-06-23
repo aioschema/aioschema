@@ -8,7 +8,7 @@
 
 AIOSchema is an open standard for generating, anchoring, and verifying the provenance of digital content and physical assets: a small JSON sidecar file (`.aios.json`) that cryptographically describes what a file is, when it existed, and who created it. Designed to be read in one hour and implemented in one day.
 
-- **Specification:** [aioschema.org/?utm_source=github-readme](https://aioschema.org/?utm_source=github-readme)
+- - **Specification:** [aioschema.org](https://aioschema.org/?utm_source=github-readme)
 - **CLI:** [aioschema.org/cli](https://aioschema.org/cli)
 - **Current version:** v0.5.6
 
