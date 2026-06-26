@@ -9,10 +9,10 @@
 > Licensed under CC-BY 4.0: attribution required for reuse, modification, or redistribution.
 > https://creativecommons.org/licenses/by/4.0/
 
-This document defines the stable, language-agnostic API surface for AIOSchema
-implementations. All official implementations (Python, TypeScript, Node.js, Go, Rust)
+All official implementations (Python, TypeScript, Node.js, Go, Rust, .NET)
 expose these functions with equivalent behavior. Language naming conventions apply
-(snake_case in Python/Go/Rust, camelCase in JS/TS), but the contracts are identical.
+(snake_case in Python/Go/Rust, camelCase in JS/TS, PascalCase in .NET), but the
+contracts are identical.
 
 ---
 
