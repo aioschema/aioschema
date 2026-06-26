@@ -254,4 +254,10 @@ registered mechanisms. New mechanisms may be proposed at
 |---|---|
 | `pHash-v1` | OPTIONAL |
 
+---
+
+## Reference
+- **Specification:** [aioschema.org/spec/v0-5-6/](https://aioschema.org/spec/v0-5-6/)
+- **Mechanism registries:** [aioschema.org/registry/](https://aioschema.org/registry/)
+
 <!-- end AIOSchema Public API v0.5.6 | AIOSchema spec v0.5.6 | https://aioschema.org -->
