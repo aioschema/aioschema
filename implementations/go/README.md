@@ -121,8 +121,6 @@ implementations/go/
 └── LICENSE.md
 ```
 
----
-
 ## Links
 - **Specification:** [aioschema.org](https://aioschema.org)
 - **Field reference:** [aioschema.org/field-reference/v0-5-6/](https://aioschema.org/field-reference/v0-5-6/)
