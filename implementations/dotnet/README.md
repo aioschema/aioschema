@@ -81,6 +81,14 @@ under adversarial conditions.
 
 ---
 
+## Links
+- **Specification:** [aioschema.org](https://aioschema.org)
+- **Field reference:** [aioschema.org/field-reference/v0-5-6/](https://aioschema.org/field-reference/v0-5-6/)
+- **All implementations:** [github.com/aioschema/aioschema](https://github.com/aioschema/aioschema)
+- **License:** Apache-2.0
+
+ ---
+ 
 ## License
 
 Apache-2.0 — see [LICENSE](../LICENSE.md)
