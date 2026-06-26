@@ -135,6 +135,13 @@ Six implementations. All cross-verified. All minimal by design: no implementatio
 
 ---
 
+## Links
+- **Specification:** [aioschema.org](https://aioschema.org)
+- **Field reference:** [aioschema.org/field-reference/v0-5-6/](https://aioschema.org/field-reference/v0-5-6/)
+- **All implementations:** [github.com/aioschema/aioschema](https://github.com/aioschema/aioschema)
+
+---
+
 ## License
 
 - **Specification:** [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) — implement freely with attribution.
