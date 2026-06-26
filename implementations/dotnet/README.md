@@ -85,11 +85,13 @@ under adversarial conditions.
 - **Specification:** [aioschema.org](https://aioschema.org)
 - **Field reference:** [aioschema.org/field-reference/v0-5-6/](https://aioschema.org/field-reference/v0-5-6/)
 - **All implementations:** [github.com/aioschema/aioschema](https://github.com/aioschema/aioschema)
-- **License:** Apache-2.0
 
- ---
- 
+---
+
 ## License
 
-Apache-2.0 — see [LICENSE](../LICENSE.md)
+Apache 2.0. See [LICENSE.md](./LICENSE.md).
+
+Specification: CC-BY 4.0 — [aioschema.org](https://aioschema.org)
+
 <!-- end aioschema/dotnet v0.5.6 | AIOSchema spec v0.5.6 -->
